@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Overlay para cerrar menú móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
+    
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
@@ -385,12 +388,32 @@
                     </div>
                 </div>
 
-                <div id="reporteResultados" class="report-grid">
-                    <!-- Se llenará dinámicamente -->
+                <div class="report-grid">
+                    <div class="report-card">
+                        <div class="report-card-value" id="reporteTotalAsistencias">0</div>
+                        <div class="report-card-label">Total Registros</div>
+                    </div>
+                    <div class="report-card">
+                        <div class="report-card-value" id="reportePresentes" style="color: #4caf50;">0</div>
+                        <div class="report-card-label">Presentes</div>
+                    </div>
+                    <div class="report-card">
+                        <div class="report-card-value" id="reporteAusentes" style="color: #f44336;">0</div>
+                        <div class="report-card-label">Ausentes</div>
+                    </div>
+                    <div class="report-card">
+                        <div class="report-card-value" id="reporteHorasExtras" style="color: #ff9800;">0</div>
+                        <div class="report-card-label">Horas Extras</div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Botón menú hamburguesa para móvil -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()">
+        ☰
+    </button>
 
     <!-- Modal para Empleado -->
     <div id="modalEmpleado" class="modal">
