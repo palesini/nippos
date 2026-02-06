@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
@@ -10,15 +10,23 @@ CORS(app)
 # Configuración de la base de datos
 DATABASE = 'asistencias.db'
 
-# Ruta principal para servir el index.html
+# =====================================================
+# RUTAS FRONTEND
+# =====================================================
+
 @app.route('/')
 def index():
+    """Sirve el archivo index.html"""
     return send_from_directory('.', 'index.html')
 
-# Ruta para servir archivos estáticos (CSS, JS)
 @app.route('/<path:path>')
 def send_static(path):
+    """Sirve archivos estáticos (CSS, JS, imágenes)"""
     return send_from_directory('.', path)
+
+# =====================================================
+# FUNCIONES DE BASE DE DATOS
+# =====================================================
 
 def get_db():
     """Obtiene una conexión a la base de datos"""
@@ -264,14 +272,14 @@ def delete_lider(id):
 
 @app.route('/api/empleados', methods=['GET'])
 def get_empleados():
-    estado = request.args.get('estado')
     conn = get_db()
     cursor = conn.cursor()
     
-    if estado:
-        cursor.execute('SELECT * FROM empleados WHERE estado = ? ORDER BY nombre, apellido', (estado,))
-    else:
+    estado = request.args.get('estado', 'activo')
+    if estado == 'todos':
         cursor.execute('SELECT * FROM empleados ORDER BY nombre, apellido')
+    else:
+        cursor.execute('SELECT * FROM empleados WHERE estado = ? ORDER BY nombre, apellido', (estado,))
     
     empleados = [dict(row) for row in cursor.fetchall()]
     conn.close()
@@ -524,6 +532,8 @@ if __name__ == '__main__':
         # Verificar que existan las tablas
         init_db()
     
-    print('Servidor iniciado en http://localhost:5000')
+    # Configurar puerto dinámico para Railway/Render
+    port = int(os.environ.get('PORT', 5000))
+    print(f'Servidor iniciado en puerto {port}')
     print('Presiona CTRL+C para detener')
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=port)
