@@ -1297,3 +1297,36 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         notif.classList.remove('show');
     }, 3000);
 }
+
+// =====================================================
+// MENÚ MÓVIL
+// =====================================================
+
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+}
+
+// Cerrar menú al hacer clic en un item de navegación (solo en móvil)
+document.addEventListener('DOMContentLoaded', () => {
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                closeMobileMenu();
+            }
+        });
+    });
+});
