@@ -4,11 +4,21 @@ import sqlite3
 from datetime import datetime
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
 DATABASE = 'asistencias.db'
+
+# Ruta principal para servir el index.html
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+# Ruta para servir archivos estáticos (CSS, JS)
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory('.', path)
 
 def get_db():
     """Obtiene una conexión a la base de datos"""
