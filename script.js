@@ -1,5 +1,5 @@
-// API Base URL
-const API_URL = 'http://localhost:5000/api';
+// API Base URL - se ajusta automáticamente según el entorno
+const API_URL = window.location.origin + '/api';
 
 // Estado global
 let currentShift = 'dia';
