@@ -8,8 +8,7 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
-DB_DIR = '/data' if os.path.exists('/data') else '.'
-DATABASE = os.path.join(DB_DIR, 'asistencias.db')
+DATABASE = 'asistencias.db'
 
 # =====================================================
 # RUTAS FRONTEND
