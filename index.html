@@ -368,12 +368,18 @@
                     <div class="card-body">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="reporteFechaDesde">Desde</label>
+                                <label for="reporteFechaDesde">Fecha Desde *</label>
                                 <input type="date" id="reporteFechaDesde" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="reporteFechaHasta">Hasta</label>
+                                <label for="reporteFechaHasta">Fecha Hasta *</label>
                                 <input type="date" id="reporteFechaHasta" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="reporteCliente">Cliente</label>
+                                <select id="reporteCliente" class="form-control">
+                                    <option value="">Todos los clientes</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="reporteObra">Obra</label>
@@ -381,8 +387,14 @@
                                     <option value="">Todas las obras</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="reporteLider">Líder/Encargado</label>
+                                <select id="reporteLider" class="form-control">
+                                    <option value="">Todos los líderes</option>
+                                </select>
+                            </div>
                         </div>
-                        <button class="btn btn-primary" onclick="generarReporte()">
+                        <button class="btn btn-primary btn-lg" onclick="generarReporte()">
                             📊 Generar Reporte
                         </button>
                     </div>
