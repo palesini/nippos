@@ -1223,12 +1223,42 @@ async function buscarAsistencias() {
 // =====================================================
 
 async function cargarFiltrosReportes() {
-    await Promise.all([
-        cargarClientes(),
-        cargarObras(),
-        cargarLideres(),
-        cargarEmpleados()
+    // Cargar datos en paralelo
+    const [clientes, obras, lideres] = await Promise.all([
+        fetch(`${API_URL}/clientes`).then(r => r.json()),
+        fetch(`${API_URL}/obras`).then(r => r.json()),
+        fetch(`${API_URL}/lideres`).then(r => r.json())
     ]);
+    
+    // Llenar selector de clientes
+    const selectCliente = document.getElementById('reporteCliente');
+    selectCliente.innerHTML = '<option value="">Todos los clientes</option>';
+    clientes.forEach(cliente => {
+        const option = document.createElement('option');
+        option.value = cliente.id;
+        option.textContent = cliente.nombre;
+        selectCliente.appendChild(option);
+    });
+    
+    // Llenar selector de obras
+    const selectObra = document.getElementById('reporteObra');
+    selectObra.innerHTML = '<option value="">Todas las obras</option>';
+    obras.forEach(obra => {
+        const option = document.createElement('option');
+        option.value = obra.id;
+        option.textContent = obra.nombre;
+        selectObra.appendChild(option);
+    });
+    
+    // Llenar selector de líderes
+    const selectLider = document.getElementById('reporteLider');
+    selectLider.innerHTML = '<option value="">Todos los líderes</option>';
+    lideres.forEach(lider => {
+        const option = document.createElement('option');
+        option.value = lider.id;
+        option.textContent = `${lider.nombre} ${lider.apellido}`;
+        selectLider.appendChild(option);
+    });
 }
 
 async function generarReporte() {
@@ -1243,29 +1273,49 @@ async function generarReporte() {
         return;
     }
     
+    // Validar que fecha desde no sea mayor que fecha hasta
+    if (fechaDesde > fechaHasta) {
+        mostrarNotificacion('La fecha inicial no puede ser mayor que la fecha final', 'error');
+        return;
+    }
+    
     let url = `${API_URL}/asistencias?fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`;
     if (clienteId) url += `&cliente_id=${clienteId}`;
     if (obraId) url += `&obra_id=${obraId}`;
     if (liderId) url += `&lider_id=${liderId}`;
     
     try {
+        console.log('Generando reporte con URL:', url);
+        
         const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
         const asistencias = await response.json();
+        
+        console.log('Asistencias recibidas:', asistencias.length);
         
         const totalAsistencias = asistencias.length;
         const presentes = asistencias.filter(a => a.presente).length;
         const ausentes = asistencias.filter(a => !a.presente).length;
-        const totalHorasExtras = asistencias.reduce((sum, a) => sum + (a.horas_extras || 0), 0);
+        const totalHorasExtras = asistencias.reduce((sum, a) => sum + (parseFloat(a.horas_extras) || 0), 0);
         
+        // Actualizar los valores en el DOM
         document.getElementById('reporteTotalAsistencias').textContent = totalAsistencias;
         document.getElementById('reportePresentes').textContent = presentes;
         document.getElementById('reporteAusentes').textContent = ausentes;
         document.getElementById('reporteHorasExtras').textContent = totalHorasExtras.toFixed(1);
         
-        mostrarNotificacion(`✓ Reporte generado: ${totalAsistencias} registros`);
+        if (totalAsistencias === 0) {
+            mostrarNotificacion('⚠️ No se encontraron registros en el rango seleccionado', 'error');
+        } else {
+            mostrarNotificacion(`✓ Reporte generado: ${totalAsistencias} registros encontrados`);
+        }
     } catch (error) {
-        console.error('Error:', error);
-        mostrarNotificacion('Error al generar reporte', 'error');
+        console.error('Error completo:', error);
+        mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
     }
 }
 
