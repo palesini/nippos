@@ -636,8 +636,8 @@ async function cargarTablaClientes() {
                 <td>${cliente.telefono || '-'}</td>
                 <td>${cliente.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -808,8 +808,8 @@ async function cargarTablaObras() {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1163,8 +1163,8 @@ async function cargarTablaLideres() {
                 <td>${lider.telefono || '-'}</td>
                 <td>${lider.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
