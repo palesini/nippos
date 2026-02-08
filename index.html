@@ -79,15 +79,15 @@
                         <div id="obraInfoContainer" style="display: none; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                                 <div>
-                                    <strong>Cliente:</strong>
+                                    <strong>所属会社:</strong>
                                     <div id="infoObraCliente" style="color: #666;">-</div>
                                 </div>
                                 <div>
-                                    <strong>Encargado/Líder:</strong>
+                                    <strong>責任者:</strong>
                                     <div id="infoObraLider" style="color: #666;">-</div>
                                 </div>
                                 <div>
-                                    <strong>Dirección:</strong>
+                                    <strong>住所:</strong>
                                     <div id="infoObraDireccion" style="color: #666;">-</div>
                                 </div>
                             </div>
@@ -244,7 +244,7 @@
                                         <th>氏名</th>
                                         <th>My№</th>
                                         <th>役職</th>
-                                        <th>電話番号/th>
+                                        <th>電話番号</th>
                                         <th>入社年月日</th>
                                         <th>状態</th>
                                         <th></th>
@@ -274,7 +274,7 @@
                             <table class="data-table" id="tablaClientes">
                                 <thead>
                                     <tr>
-                                        <th>社名</th>
+                                        <th>会社名</th>
                                         <th>取引種別</th>
                                         <th>住所</th>
                                         <th>電話番号</th>
@@ -295,9 +295,9 @@
             <!-- Vista: Obras -->
             <div id="view-obras" class="view">
                 <div class="view-header">
-                    <h2>Gestión de Obras</h2>
+                    <h2>現場管理</h2>
                     <button class="btn btn-primary" onclick="mostrarModalObra()">
-                        + Nueva Obra
+                        + 現場追加
                     </button>
                 </div>
 
@@ -307,13 +307,13 @@
                             <table class="data-table" id="tablaObras">
                                 <thead>
                                     <tr>
-                                        <th>Nombre</th>
-                                        <th>Cliente</th>
-                                        <th>Líder</th>
-                                        <th>Dirección</th>
-                                        <th>Fecha Inicio</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
+                                        <th>現場名</th>
+                                        <th>所属会社</th>
+                                        <th>責任者</th>
+                                        <th>住所</th>
+                                        <th>作業開始日</th>
+                                        <th>状態</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -388,7 +388,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="reporteLider">責任者・責任者</label>
+                                <label for="reporteLider">責任者</label>
                                 <select id="reporteLider" class="form-control">
                                     <option value="">Todos los líderes</option>
                                 </select>
