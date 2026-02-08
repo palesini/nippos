@@ -975,12 +975,12 @@ async function cargarEmpleadosDeObra(obraId) {
                     </div>
                     <input type="number" 
                            class="overtime-input" 
-                           placeholder="H.E."
+                           placeholder="残業"
                            min="0" 
                            step="0.5"
                            value="${registro.horas_extras || 0}"
                            onchange="actualizarHorasExtras(${empleado.id}, this.value)"
-                           title="Horas extras">
+                           title="残業">
                 </div>
             `;
             container.appendChild(item);
@@ -1202,7 +1202,7 @@ async function buscarAsistencias() {
                 <td>${asist.lider_nombre} ${asist.lider_apellido}</td>
                 <td>
                     <span class="badge ${asist.presente ? 'badge-success' : 'badge-danger'}">
-                        ${asist.presente ? 'Presente' : 'Ausente'}
+                        ${asist.presente ? '出勤' : '欠勤'}
                     </span>
                 </td>
                 <td>${formatearJornada(asist.tipo_jornada)}</td>
