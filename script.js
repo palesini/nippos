@@ -144,17 +144,14 @@ async function cargarEmpleadosRegistro() {
                             ✕
                         </button>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                        <label style="font-size: 12px; font-weight: 600; color: #666;">残業</label>
-                        <input type="number" 
-                               class="overtime-input" 
-                               placeholder="0"
-                               min="0" 
-                               step="0.5"
-                               value="${registro.horas_extras || 0}"
-                               onchange="actualizarHorasExtras(${empleado.id}, this.value)"
-                               title="残業">
-                    </div>
+                    <input type="number" 
+                           class="overtime-input" 
+                           placeholder="残業"
+                           min="0" 
+                           step="0.5"
+                           value="${registro.horas_extras || 0}"
+                           onchange="actualizarHorasExtras(${empleado.id}, this.value)"
+                           title="残業">
                 </div>
             `;
             container.appendChild(item);
@@ -335,13 +332,19 @@ async function cargarTablaEmpleados() {
         tbody.innerHTML = '';
         
         if (empleados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay empleados registrados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No hay empleados registrados</td></tr>';
             return;
         }
         
         empleados.forEach(emp => {
+            // Generar HTML para la foto
+            const fotoHtml = emp.foto 
+                ? `<img src="${emp.foto}" class="employee-photo-small" alt="${emp.nombre}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">` 
+                : `<div class="employee-photo-placeholder" style="width: 50px; height: 50px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 24px;">👷</div>`;
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td style="text-align: center;">${fotoHtml}</td>
                 <td>${emp.nombre} ${emp.apellido}</td>
                 <td>${emp.dni || '-'}</td>
                 <td>${emp.cargo || '-'}</td>
@@ -353,8 +356,8 @@ async function cargarTablaEmpleados() {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -375,93 +378,12 @@ function mostrarModalEmpleado() {
     document.getElementById('empleadoCargo').value = '';
     document.getElementById('empleadoFechaIngreso').value = '';
     document.getElementById('empleadoEstado').value = 'activo';
-    
-    // Limpiar foto
-    fotoBase64 = null;
-    document.getElementById('empleadoFoto').value = '';
-    document.getElementById('photoPreviewImg').style.display = 'none';
-    document.getElementById('photoPlaceholder').style.display = 'block';
-    document.getElementById('btnEliminarFoto').style.display = 'none';
-    
     document.getElementById('modalEmpleado').classList.add('active');
 }
 
 function cerrarModalEmpleado() {
     document.getElementById('modalEmpleado').classList.remove('active');
-    // Limpiar la previsualización de foto al cerrar
-    document.getElementById('photoPreviewImg').style.display = 'none';
-    document.getElementById('photoPlaceholder').style.display = 'block';
-    document.getElementById('btnEliminarFoto').style.display = 'none';
-    document.getElementById('empleadoFoto').value = '';
 }
-
-// =====================================================
-// FUNCIONES DE FOTO
-// =====================================================
-
-let fotoBase64 = null;
-
-function previsualizarFoto(input) {
-    const file = input.files[0];
-    
-    if (file) {
-        // Validar que sea una imagen
-        if (!file.type.startsWith('image/')) {
-            mostrarNotificacion('Por favor seleccione una imagen válida', 'error');
-            input.value = '';
-            return;
-        }
-        
-        // Validar tamaño (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            mostrarNotificacion('La imagen es muy grande. Máximo 5MB', 'error');
-            input.value = '';
-            return;
-        }
-        
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            fotoBase64 = e.target.result;
-            
-            // Mostrar previsualización
-            const imgPreview = document.getElementById('photoPreviewImg');
-            const placeholder = document.getElementById('photoPlaceholder');
-            const btnEliminar = document.getElementById('btnEliminarFoto');
-            
-            imgPreview.src = fotoBase64;
-            imgPreview.style.display = 'block';
-            placeholder.style.display = 'none';
-            btnEliminar.style.display = 'inline-block';
-        };
-        
-        reader.onerror = function() {
-            mostrarNotificacion('Error al leer la imagen', 'error');
-        };
-        
-        reader.readAsDataURL(file);
-    }
-}
-
-function eliminarFoto() {
-    fotoBase64 = null;
-    
-    const imgPreview = document.getElementById('photoPreviewImg');
-    const placeholder = document.getElementById('photoPlaceholder');
-    const btnEliminar = document.getElementById('btnEliminarFoto');
-    const inputFoto = document.getElementById('empleadoFoto');
-    
-    imgPreview.src = '';
-    imgPreview.style.display = 'none';
-    placeholder.style.display = 'block';
-    btnEliminar.style.display = 'none';
-    inputFoto.value = '';
-}
-
-// =====================================================
-// FIN FUNCIONES DE FOTO
-// =====================================================
-
 
 async function editarEmpleado(id) {
     try {
@@ -480,21 +402,6 @@ async function editarEmpleado(id) {
         document.getElementById('empleadoCargo').value = empleado.cargo || '';
         document.getElementById('empleadoFechaIngreso').value = empleado.fecha_ingreso || '';
         document.getElementById('empleadoEstado').value = empleado.estado;
-        
-        // Cargar foto si existe
-        if (empleado.foto) {
-            fotoBase64 = empleado.foto;
-            document.getElementById('photoPreviewImg').src = empleado.foto;
-            document.getElementById('photoPreviewImg').style.display = 'block';
-            document.getElementById('photoPlaceholder').style.display = 'none';
-            document.getElementById('btnEliminarFoto').style.display = 'inline-block';
-        } else {
-            // Limpiar foto si no hay
-            fotoBase64 = null;
-            document.getElementById('photoPreviewImg').style.display = 'none';
-            document.getElementById('photoPlaceholder').style.display = 'block';
-            document.getElementById('btnEliminarFoto').style.display = 'none';
-        }
         
         document.getElementById('modalEmpleado').classList.add('active');
     } catch (error) {
@@ -518,17 +425,7 @@ async function guardarEmpleado() {
     }
     
     try {
-        // Incluir la foto si existe
-        const data = { 
-            nombre, 
-            apellido, 
-            dni, 
-            telefono, 
-            cargo, 
-            fecha_ingreso, 
-            estado, 
-            foto: fotoBase64 
-        };
+        const data = { nombre, apellido, dni, telefono, cargo, fecha_ingreso, estado, foto: null };
         
         let response;
         if (id) {
@@ -551,9 +448,6 @@ async function guardarEmpleado() {
             cerrarModalEmpleado();
             cargarTablaEmpleados();
             cargarEmpleados();
-            cargarEmpleadosRegistro();
-            // Limpiar foto después de guardar
-            fotoBase64 = null;
         }
     } catch (error) {
         console.error('Error:', error);
@@ -630,8 +524,8 @@ async function cargarTablaClientes() {
                 <td>${cliente.telefono || '-'}</td>
                 <td>${cliente.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -802,8 +696,8 @@ async function cargarTablaObras() {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1085,17 +979,14 @@ async function cargarEmpleadosDeObra(obraId) {
                             ✕
                         </button>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                        <label style="font-size: 12px; font-weight: 600; color: #666;">残業</label>
-                        <input type="number" 
-                               class="overtime-input" 
-                               placeholder="0"
-                               min="0" 
-                               step="0.5"
-                               value="${registro.horas_extras || 0}"
-                               onchange="actualizarHorasExtras(${empleado.id}, this.value)"
-                               title="残業">
-                    </div>
+                    <input type="number" 
+                           class="overtime-input" 
+                           placeholder="残業"
+                           min="0" 
+                           step="0.5"
+                           value="${registro.horas_extras || 0}"
+                           onchange="actualizarHorasExtras(${empleado.id}, this.value)"
+                           title="残業">
                 </div>
             `;
             container.appendChild(item);
@@ -1157,8 +1048,8 @@ async function cargarTablaLideres() {
                 <td>${lider.telefono || '-'}</td>
                 <td>${lider.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1317,11 +1208,11 @@ async function buscarAsistencias() {
                 <td>${asist.lider_nombre} ${asist.lider_apellido}</td>
                 <td>
                     <span class="badge ${asist.presente ? 'badge-success' : 'badge-danger'}">
-                        ${asist.presente ? '出席' : '欠席'}
+                        ${asist.presente ? '出勤' : '欠勤'}
                     </span>
                 </td>
                 <td>${formatearJornada(asist.tipo_jornada)}</td>
-                <td>${asist.horas_extras || 0}</td>
+                <td>${asist.horas_extras || 0} hs</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1495,3 +1386,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+
