@@ -14,38 +14,39 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h1>Komei Nippo</h1>
-                <p>日報</p>
+                <img src="logo-komei.jpg" alt="Komei Densetsu" style="width: 180px; margin-bottom: 15px; border-radius: 8px; background: white; padding: 10px;">
+                <h1>勤怠管理</h1>
+                <p>Komei Densetsu</p>
             </div>
             
             <nav class="sidebar-nav">
                 <button class="nav-item active" data-view="registro" onclick="changeView('registro')">
                     <span class="icon">📝</span>
-                    <span>出勤・欠勤登録</span>
+                    <span>Registrar Asistencia</span>
                 </button>
                 <button class="nav-item" data-view="consultas" onclick="changeView('consultas')">
                     <span class="icon">🔍</span>
-                    <span>検索</span>
+                    <span>Consultar</span>
                 </button>
                 <button class="nav-item" data-view="empleados" onclick="changeView('empleados')">
                     <span class="icon">👷</span>
-                    <span>作業員</span>
+                    <span>Empleados</span>
                 </button>
                 <button class="nav-item" data-view="clientes" onclick="changeView('clientes')">
                     <span class="icon">🏢</span>
-                    <span>所属会社</span>
+                    <span>Clientes</span>
                 </button>
                 <button class="nav-item" data-view="obras" onclick="changeView('obras')">
                     <span class="icon">🏗️</span>
-                    <span>現場名</span>
+                    <span>Obras</span>
                 </button>
                 <button class="nav-item" data-view="lideres" onclick="changeView('lideres')">
                     <span class="icon">👔</span>
-                    <span>責任者</span>
+                    <span>Líderes</span>
                 </button>
                 <button class="nav-item" data-view="reportes" onclick="changeView('reportes')">
                     <span class="icon">📊</span>
-                    <span>報告</span>
+                    <span>Reportes</span>
                 </button>
             </nav>
         </aside>
@@ -55,23 +56,23 @@
             <!-- Vista: Registrar Asistencia -->
             <div id="view-registro" class="view active">
                 <div class="view-header">
-                    <h2>日報入力</h2>
+                    <h2>Registrar Asistencia Diaria</h2>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>登録情報</h3>
+                        <h3>Información del Registro</h3>
                     </div>
                     <div class="card-body">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="registroFecha">年月日</label>
+                                <label for="registroFecha">Fecha</label>
                                 <input type="date" id="registroFecha" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="registroObra">現場名</label>
+                                <label for="registroObra">Obra</label>
                                 <select id="registroObra" class="form-control" required onchange="cargarInfoObra()">
-                                    <option value="">現場検索...</option>
+                                    <option value="">Seleccione una obra...</option>
                                 </select>
                             </div>
                         </div>
@@ -79,31 +80,31 @@
                         <div id="obraInfoContainer" style="display: none; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                                 <div>
-                                    <strong>所属会社:</strong>
+                                    <strong>Cliente:</strong>
                                     <div id="infoObraCliente" style="color: #666;">-</div>
                                 </div>
                                 <div>
-                                    <strong>責任者:</strong>
+                                    <strong>Encargado/Líder:</strong>
                                     <div id="infoObraLider" style="color: #666;">-</div>
                                 </div>
                                 <div>
-                                    <strong>住所:</strong>
+                                    <strong>Dirección:</strong>
                                     <div id="infoObraDireccion" style="color: #666;">-</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="shift-selector">
-                            <label>勤務日種別</label>
+                            <label>Tipo de Jornada</label>
                             <div class="shift-buttons">
                                 <button class="shift-btn active" data-shift="dia" onclick="selectShift('dia')">
-                                    ☀️ 昼
+                                    ☀️ Día
                                 </button>
                                 <button class="shift-btn" data-shift="noche" onclick="selectShift('noche')">
-                                    🌙 夜
+                                    🌙 Noche
                                 </button>
                                 <button class="shift-btn" data-shift="dia_noche" onclick="selectShift('dia_noche')">
-                                    🌓 昼夜
+                                    🌓 Día y Noche
                                 </button>
                             </div>
                         </div>
@@ -112,7 +113,10 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>作業員一覧</h3>
+                        <h3>Lista de Trabajadores</h3>
+                        <button class="btn btn-secondary" onclick="cargarAsistenciaExistente()">
+                            🔄 Cargar registro existente
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="listaEmpleadosRegistro" class="workers-list">
@@ -124,20 +128,20 @@
                 <div class="action-bar">
                     <div class="stats-summary">
                         <div class="stat-item">
-                            <span class="stat-label">出勤数:</span>
+                            <span class="stat-label">Presentes:</span>
                             <span class="stat-value" id="statPresentes">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">欠勤数:</span>
+                            <span class="stat-label">Ausentes:</span>
                             <span class="stat-value" id="statAusentes">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">合計:</span>
+                            <span class="stat-label">Total:</span>
                             <span class="stat-value" id="statTotal">0</span>
                         </div>
                     </div>
                     <button class="btn btn-primary btn-lg" onclick="guardarAsistencias()">
-                        💾 保存
+                        💾 Guardar Asistencias
                     </button>
                 </div>
             </div>
@@ -145,71 +149,76 @@
             <!-- Vista: Consultas -->
             <div id="view-consultas" class="view">
                 <div class="view-header">
-                    <h2>出勤検索</h2>
+                    <h2>Consultar Asistencias</h2>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>検索</h3>
+                        <h3>Filtros de Búsqueda</h3>
                     </div>
                     <div class="card-body">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="consultaFechaDesde">年月日から</label>
+                                <label for="consultaFechaDesde">Desde</label>
                                 <input type="date" id="consultaFechaDesde" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="consultaFechaHasta">年月日まで</label>
+                                <label for="consultaFechaHasta">Hasta</label>
                                 <input type="date" id="consultaFechaHasta" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="consultaCliente">所属会社</label>
+                                <label for="consultaCliente">Cliente</label>
                                 <select id="consultaCliente" class="form-control">
-                                    <option value="">会社一覧</option>
+                                    <option value="">Todos los clientes</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="consultaObra">現場名</label>
+                                <label for="consultaObra">Obra</label>
                                 <select id="consultaObra" class="form-control">
-                                    <option value="">現場検索</option>
+                                    <option value="">Todas las obras</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="consultaEmpleado">作業員</label>
+                                <label for="consultaEmpleado">Empleado</label>
                                 <select id="consultaEmpleado" class="form-control">
-                                    <option value="">全作業員</option>
+                                    <option value="">Todos los empleados</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="consultaLider">責任者</label>
+                                <label for="consultaLider">Líder</label>
                                 <select id="consultaLider" class="form-control">
-                                    <option value="">全責任者</option>
+                                    <option value="">Todos los líderes</option>
                                 </select>
                             </div>
                         </div>
-                        <button class="btn btn-primary" onclick="buscarAsistencias()">
-                            🔍 検索
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="buscarAsistencias()">
+                                🔍 Buscar
+                            </button>
+                            <button class="btn btn-success" onclick="exportarConsultasExcel()">
+                                📊 Exportar a Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>検索結果</h3>
+                        <h3>Resultados</h3>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="data-table" id="tablaConsultas">
                                 <thead>
                                     <tr>
-                                        <th>年月日</th>
-                                        <th>所属会社</th>
-                                        <th>現場名</th>
-                                        <th>作業員</th>
-                                        <th>役職</th>
-                                        <th>責任者</th>
-                                        <th>出勤 / 欠勤</th>
-                                        <th>勤務別</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Obra</th>
+                                        <th>Empleado</th>
+                                        <th>Cargo</th>
+                                        <th>Líder</th>
+                                        <th>Asistencia</th>
+                                        <th>Jornada</th>
                                         <th>残業</th>
                                     </tr>
                                 </thead>
@@ -225,9 +234,9 @@
             <!-- Vista: Empleados -->
             <div id="view-empleados" class="view">
                 <div class="view-header">
-                    <h2>作業員管理</h2>
+                    <h2>Gestión de Empleados</h2>
                     <button class="btn btn-primary" onclick="mostrarModalEmpleado()">
-                        + 作業員追加
+                        + Nuevo Empleado
                     </button>
                 </div>
 
@@ -237,14 +246,14 @@
                             <table class="data-table" id="tablaEmpleados">
                                 <thead>
                                     <tr>
-                                        <th>写真</th>
-                                        <th>氏名</th>
-                                        <th>My№</th>
-                                        <th>役職</th>
-                                        <th>電話番号</th>
-                                        <th>入社年月日</th>
-                                        <th>状態</th>
-                                        <th></th>
+                                        <th>Foto</th>
+                                        <th>Nombre</th>
+                                        <th>DNI</th>
+                                        <th>Cargo</th>
+                                        <th>Teléfono</th>
+                                        <th>Fecha Ingreso</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -259,9 +268,9 @@
             <!-- Vista: Clientes -->
             <div id="view-clientes" class="view">
                 <div class="view-header">
-                    <h2>所属会社管理</h2>
+                    <h2>Gestión de Clientes</h2>
                     <button class="btn btn-primary" onclick="mostrarModalCliente()">
-                        + 会社追加
+                        + Nuevo Cliente
                     </button>
                 </div>
 
@@ -271,13 +280,13 @@
                             <table class="data-table" id="tablaClientes">
                                 <thead>
                                     <tr>
-                                        <th>会社名</th>
-                                        <th>取引種別</th>
-                                        <th>住所</th>
-                                        <th>電話番号</th>
-                                        <th>メールアドレス</th>
-                                        <th>担当者</th>
-                                        <th></th>
+                                        <th>Nombre</th>
+                                        <th>Razón Social</th>
+                                        <th>RUC/DNI</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Obras</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -292,9 +301,9 @@
             <!-- Vista: Obras -->
             <div id="view-obras" class="view">
                 <div class="view-header">
-                    <h2>現場管理</h2>
+                    <h2>Gestión de Obras</h2>
                     <button class="btn btn-primary" onclick="mostrarModalObra()">
-                        + 現場追加
+                        + Nueva Obra
                     </button>
                 </div>
 
@@ -304,13 +313,13 @@
                             <table class="data-table" id="tablaObras">
                                 <thead>
                                     <tr>
-                                        <th>現場名</th>
-                                        <th>所属会社</th>
-                                        <th>責任者</th>
-                                        <th>住所</th>
-                                        <th>作業開始日</th>
-                                        <th>状態</th>
-                                        <th></th>
+                                        <th>Nombre</th>
+                                        <th>Cliente</th>
+                                        <th>Líder</th>
+                                        <th>Dirección</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -325,9 +334,9 @@
             <!-- Vista: Líderes -->
             <div id="view-lideres" class="view">
                 <div class="view-header">
-                    <h2>責任者管理</h2>
+                    <h2>Gestión de Líderes/Encargados</h2>
                     <button class="btn btn-primary" onclick="mostrarModalLider()">
-                        + 責任者追加
+                        + Nuevo Líder
                     </button>
                 </div>
 
@@ -337,10 +346,10 @@
                             <table class="data-table" id="tablaLideres">
                                 <thead>
                                     <tr>
-                                        <th>氏名</th>
-                                        <th>電話番号</th>
-                                        <th>メールアドレス</th>
-                                        <th></th>
+                                        <th>Nombre</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -355,60 +364,65 @@
             <!-- Vista: Reportes -->
             <div id="view-reportes" class="view">
                 <div class="view-header">
-                    <h2>報告・統計</h2>
+                    <h2>Reportes y Estadísticas</h2>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>検索</h3>
+                        <h3>Filtros</h3>
                     </div>
                     <div class="card-body">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="reporteFechaDesde">年月日から *</label>
+                                <label for="reporteFechaDesde">Fecha Desde *</label>
                                 <input type="date" id="reporteFechaDesde" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="reporteFechaHasta">年月日まで *</label>
+                                <label for="reporteFechaHasta">Fecha Hasta *</label>
                                 <input type="date" id="reporteFechaHasta" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label for="reporteCliente">所属会社</label>
+                                <label for="reporteCliente">Cliente</label>
                                 <select id="reporteCliente" class="form-control">
-                                    <option value="">会社一覧</option>
+                                    <option value="">Todos los clientes</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="reporteObra">現場名</label>
+                                <label for="reporteObra">Obra</label>
                                 <select id="reporteObra" class="form-control">
-                                    <option value="">現場検索</option>
+                                    <option value="">Todas las obras</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="reporteLider">責任者</label>
+                                <label for="reporteLider">Líder/Encargado</label>
                                 <select id="reporteLider" class="form-control">
-                                    <option value="">全責任者</option>
+                                    <option value="">Todos los líderes</option>
                                 </select>
                             </div>
                         </div>
-                        <button class="btn btn-primary btn-lg" onclick="generarReporte()">
-                            📊 レポート作成
-                        </button>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-lg" onclick="generarReporte()">
+                                📊 Generar Reporte
+                            </button>
+                            <button class="btn btn-success btn-lg" onclick="exportarReporteExcel()">
+                                📊 Exportar a Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="report-grid">
                     <div class="report-card">
                         <div class="report-card-value" id="reporteTotalAsistencias">0</div>
-                        <div class="report-card-label">報告合計</div>
+                        <div class="report-card-label">Total Registros</div>
                     </div>
                     <div class="report-card">
                         <div class="report-card-value" id="reportePresentes" style="color: #4caf50;">0</div>
-                        <div class="report-card-label">出勤</div>
+                        <div class="report-card-label">Presentes</div>
                     </div>
                     <div class="report-card">
                         <div class="report-card-value" id="reporteAusentes" style="color: #f44336;">0</div>
-                        <div class="report-card-label">欠勤</div>
+                        <div class="report-card-label">Ausentes</div>
                     </div>
                     <div class="report-card">
                         <div class="report-card-value" id="reporteHorasExtras" style="color: #ff9800;">0</div>
@@ -481,8 +495,8 @@
                 <div class="form-group">
                     <label>Estado</label>
                     <select id="empleadoEstado" class="form-control">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                        <option value="activo">在職中</option>
+                        <option value="inactivo">退職</option>
                     </select>
                 </div>
             </div>
@@ -542,9 +556,9 @@
                 <div class="form-group">
                     <label>Estado</label>
                     <select id="obraEstado" class="form-control">
-                        <option value="activa">Activa</option>
-                        <option value="pausada">Pausada</option>
-                        <option value="finalizada">Finalizada</option>
+                        <option value="activa">施工中</option>
+                        <option value="pausada">一時中止</option>
+                        <option value="finalizada">終了</option>
                     </select>
                 </div>
                 
@@ -644,6 +658,8 @@
     <!-- Notificación -->
     <div id="notification" class="notification"></div>
 
+    <!-- Librería SheetJS para exportar a Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

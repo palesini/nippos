@@ -355,12 +355,12 @@ async function cargarTablaEmpleados() {
                 <td>${emp.fecha_ingreso ? formatearFecha(emp.fecha_ingreso) : '-'}</td>
                 <td>
                     <span class="badge ${emp.estado === 'activo' ? 'badge-success' : 'badge-danger'}">
-                        ${emp.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                        ${emp.estado === 'activo' ? '在職中' : '退職'}
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">変更</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">削除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">Eliminar</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -636,8 +636,8 @@ async function cargarTablaClientes() {
                 <td>${cliente.telefono || '-'}</td>
                 <td>${cliente.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">変更</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">削除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -804,12 +804,12 @@ async function cargarTablaObras() {
                         obra.estado === 'activa' ? 'badge-success' : 
                         obra.estado === 'pausada' ? 'badge-warning' : 'badge-info'
                     }">
-                        ${obra.estado.charAt(0).toUpperCase() + obra.estado.slice(1)}
+                        ${obra.estado === 'activa' ? '施工中' : obra.estado === 'pausada' ? '一時中止' : '終了'}
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">変更</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">削除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">Eliminar</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1163,8 +1163,8 @@ async function cargarTablaLideres() {
                 <td>${lider.telefono || '-'}</td>
                 <td>${lider.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">変更</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">削除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">Eliminar</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1304,11 +1304,15 @@ async function buscarAsistencias() {
         const response = await fetch(url);
         const asistencias = await response.json();
         
+        // Guardar para exportar
+        ultimasAsistenciasConsulta = asistencias;
+        
         const tbody = document.querySelector('#tablaConsultas tbody');
         tbody.innerHTML = '';
         
         if (asistencias.length === 0) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No se encontraron resultados</td></tr>';
+            ultimasAsistenciasConsulta = [];
             return;
         }
         
@@ -1323,7 +1327,7 @@ async function buscarAsistencias() {
                 <td>${asist.lider_nombre} ${asist.lider_apellido}</td>
                 <td>
                     <span class="badge ${asist.presente ? 'badge-success' : 'badge-danger'}">
-                        ${asist.presente ? '出席' : '欠席'}
+                        ${asist.presente ? 'Presente' : 'Ausente'}
                     </span>
                 </td>
                 <td>${formatearJornada(asist.tipo_jornada)}</td>
@@ -1416,6 +1420,9 @@ async function generarReporte() {
         
         const asistencias = await response.json();
         
+        // Guardar para exportar
+        ultimasAsistenciasReporte = asistencias;
+        
         console.log('Asistencias recibidas:', asistencias.length);
         
         const totalAsistencias = asistencias.length;
@@ -1430,6 +1437,7 @@ async function generarReporte() {
         document.getElementById('reporteHorasExtras').textContent = totalHorasExtras.toFixed(1);
         
         if (totalAsistencias === 0) {
+            ultimasAsistenciasReporte = [];
             mostrarNotificacion('⚠️ No se encontraron registros en el rango seleccionado', 'error');
         } else {
             mostrarNotificacion(`✓ Reporte generado: ${totalAsistencias} registros encontrados`);
@@ -1467,6 +1475,109 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     setTimeout(() => {
         notif.classList.remove('show');
     }, 3000);
+}
+
+// =====================================================
+// EXPORTAR A EXCEL
+// =====================================================
+
+let ultimasAsistenciasConsulta = [];
+let ultimasAsistenciasReporte = [];
+
+async function exportarConsultasExcel() {
+    // Si no hay datos en la tabla, buscar primero
+    if (ultimasAsistenciasConsulta.length === 0) {
+        mostrarNotificacion('Primero debes buscar asistencias', 'error');
+        return;
+    }
+    
+    // Preparar datos para Excel
+    const datos = ultimasAsistenciasConsulta.map(asist => ({
+        'Fecha': formatearFecha(asist.fecha),
+        'Cliente': asist.cliente_nombre || '-',
+        'Obra': asist.obra_nombre,
+        'Empleado': `${asist.empleado_nombre} ${asist.empleado_apellido}`,
+        'Cargo': asist.cargo || '-',
+        'Líder': `${asist.lider_nombre} ${asist.lider_apellido}`,
+        'Asistencia': asist.presente ? '出席' : '欠席',
+        'Jornada': formatearJornada(asist.tipo_jornada),
+        '残業': asist.horas_extras || 0
+    }));
+    
+    // Crear libro de Excel
+    const ws = XLSX.utils.json_to_sheet(datos);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Consultas");
+    
+    // Generar nombre de archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `consultas_asistencias_${fecha}.xlsx`;
+    
+    // Descargar
+    XLSX.writeFile(wb, nombreArchivo);
+    
+    mostrarNotificacion(`✓ Excel generado: ${nombreArchivo}`);
+}
+
+async function exportarReporteExcel() {
+    // Si no hay datos en el reporte, generar primero
+    const totalAsistencias = document.getElementById('reporteTotalAsistencias').textContent;
+    
+    if (totalAsistencias === '0') {
+        mostrarNotificacion('Primero debes generar el reporte', 'error');
+        return;
+    }
+    
+    // Si no hay datos guardados, obtenerlos de nuevo
+    if (ultimasAsistenciasReporte.length === 0) {
+        mostrarNotificacion('Genera el reporte primero', 'error');
+        return;
+    }
+    
+    // Preparar datos detallados
+    const datosDetallados = ultimasAsistenciasReporte.map(asist => ({
+        'Fecha': formatearFecha(asist.fecha),
+        'Cliente': asist.cliente_nombre || '-',
+        'Obra': asist.obra_nombre,
+        'Empleado': `${asist.empleado_nombre} ${asist.empleado_apellido}`,
+        'Cargo': asist.cargo || '-',
+        'Líder': `${asist.lider_nombre} ${asist.lider_apellido}`,
+        'Asistencia': asist.presente ? '出席' : '欠席',
+        'Jornada': formatearJornada(asist.tipo_jornada),
+        '残業': asist.horas_extras || 0
+    }));
+    
+    // Preparar resumen
+    const presentes = parseInt(document.getElementById('reportePresentes').textContent);
+    const ausentes = parseInt(document.getElementById('reporteAusentes').textContent);
+    const horasExtras = parseFloat(document.getElementById('reporteHorasExtras').textContent);
+    
+    const resumen = [
+        { 'Concepto': 'Total Registros', 'Valor': totalAsistencias },
+        { 'Concepto': '出席 (Presentes)', 'Valor': presentes },
+        { 'Concepto': '欠席 (Ausentes)', 'Valor': ausentes },
+        { 'Concepto': '残業 Total', 'Valor': horasExtras }
+    ];
+    
+    // Crear libro con dos hojas
+    const wb = XLSX.utils.book_new();
+    
+    // Hoja 1: Resumen
+    const wsResumen = XLSX.utils.json_to_sheet(resumen);
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+    
+    // Hoja 2: Detalles
+    const wsDetalle = XLSX.utils.json_to_sheet(datosDetallados);
+    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle");
+    
+    // Generar nombre de archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `reporte_asistencias_${fecha}.xlsx`;
+    
+    // Descargar
+    XLSX.writeFile(wb, nombreArchivo);
+    
+    mostrarNotificacion(`✓ Excel generado: ${nombreArchivo}`);
 }
 
 // =====================================================
