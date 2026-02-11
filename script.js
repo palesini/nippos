@@ -1478,106 +1478,262 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 }
 
 // =====================================================
-// EXPORTAR A EXCEL
+// EXPORTAR A EXCEL - FORMATO KOMEI DENSETSU
 // =====================================================
 
 let ultimasAsistenciasConsulta = [];
 let ultimasAsistenciasReporte = [];
 
+/**
+ * Exporta las consultas en formato Komei Densetsu (出勤表)
+ */
 async function exportarConsultasExcel() {
-    // Si no hay datos en la tabla, buscar primero
     if (ultimasAsistenciasConsulta.length === 0) {
         mostrarNotificacion('Primero debes buscar asistencias', 'error');
         return;
     }
     
-    // Preparar datos para Excel
-    const datos = ultimasAsistenciasConsulta.map(asist => ({
-        'Fecha': formatearFecha(asist.fecha),
-        'Cliente': asist.cliente_nombre || '-',
-        'Obra': asist.obra_nombre,
-        'Empleado': `${asist.empleado_nombre} ${asist.empleado_apellido}`,
-        'Cargo': asist.cargo || '-',
-        'Líder': `${asist.lider_nombre} ${asist.lider_apellido}`,
-        'Asistencia': asist.presente ? '出席' : '欠席',
-        'Jornada': formatearJornada(asist.tipo_jornada),
-        '残業': asist.horas_extras || 0
-    }));
+    try {
+        const agrupadoPorObra = agruparAsistenciasPorObraPeriodo(ultimasAsistenciasConsulta);
+        
+        if (agrupadoPorObra.length === 0) {
+            mostrarNotificacion('No hay datos para exportar', 'error');
+            return;
+        }
+        
+        const wb = XLSX.utils.book_new();
+        
+        for (const obra of agrupadoPorObra) {
+            const ws = crearHojaKomeiDensetsu(obra);
+            const nombreHoja = sanitizarNombreHoja(obra.nombreObra);
+            XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+        }
+        
+        const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        XLSX.writeFile(wb, `出勤表_${fecha}.xlsx`);
+        
+        mostrarNotificacion('✓ Excel generado en formato Komei Densetsu');
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('Error: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Agrupa asistencias por obra y período (21-20)
+ */
+function agruparAsistenciasPorObraPeriodo(asistencias) {
+    const grupos = {};
     
-    // Crear libro de Excel
-    const ws = XLSX.utils.json_to_sheet(datos);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Consultas");
+    asistencias.forEach(asist => {
+        const fecha = new Date(asist.fecha + 'T00:00:00');
+        const periodo = calcularPeriodoKomei(fecha);
+        const key = `${asist.obra_id}_${periodo.inicio}`;
+        
+        if (!grupos[key]) {
+            grupos[key] = {
+                obraId: asist.obra_id,
+                nombreObra: asist.obra_nombre,
+                clienteNombre: asist.cliente_nombre || 'Cliente',
+                periodo: periodo,
+                empleados: {}
+            };
+        }
+        
+        const empKey = asist.empleado_id;
+        if (!grupos[key].empleados[empKey]) {
+            grupos[key].empleados[empKey] = {
+                id: asist.empleado_id,
+                nombre: `${asist.empleado_nombre}　${asist.empleado_apellido}`,
+                asistencias: {},
+                horasExtras: {}
+            };
+        }
+        
+        const dia = fecha.getDate();
+        grupos[key].empleados[empKey].asistencias[dia] = asist.presente;
+        grupos[key].empleados[empKey].horasExtras[dia] = parseFloat(asist.horas_extras) || 0;
+    });
     
-    // Generar nombre de archivo con fecha
-    const fecha = new Date().toISOString().split('T')[0];
-    const nombreArchivo = `consultas_asistencias_${fecha}.xlsx`;
+    return Object.values(grupos);
+}
+
+/**
+ * Calcula período Komei (21 al 20)
+ */
+function calcularPeriodoKomei(fecha) {
+    const year = fecha.getFullYear();
+    const month = fecha.getMonth();
+    const day = fecha.getDate();
     
-    // Descargar
-    XLSX.writeFile(wb, nombreArchivo);
+    let mesInicio, añoInicio, mesFin, añoFin;
     
-    mostrarNotificacion(`✓ Excel generado: ${nombreArchivo}`);
+    if (day >= 21) {
+        mesInicio = month + 1;
+        añoInicio = year;
+        mesFin = month + 2;
+        añoFin = year;
+        if (mesFin > 12) {
+            mesFin = 1;
+            añoFin++;
+        }
+    } else {
+        mesInicio = month;
+        añoInicio = year;
+        mesFin = month + 1;
+        añoFin = year;
+        if (mesInicio < 1) {
+            mesInicio = 12;
+            añoInicio--;
+        }
+    }
+    
+    return {
+        mesInicio,
+        añoInicio,
+        mesFin,
+        añoFin
+    };
+}
+
+/**
+ * Crea hoja Excel en formato Komei Densetsu exacto
+ */
+function crearHojaKomeiDensetsu(obraData) {
+    const periodo = obraData.periodo;
+    const añoReiwa = periodo.añoInicio - 2018;
+    
+    // Calcular días en cada mes
+    const diasMes1 = new Date(periodo.añoInicio, periodo.mesInicio, 0).getDate();
+    const diasMes2 = 20;
+    
+    // Array para datos
+    const aoa = [];
+    
+    // FILA 1
+    const f1 = Array(36).fill('');
+    f1[0] = '会社名';
+    f1[1] = 'Komei Densetsu';
+    f1[16] = '出　　　勤　　　表';
+    f1[32] = '自';
+    f1[33] = `令和　${añoReiwa}年　${periodo.mesInicio}月 21日`;
+    aoa.push(f1);
+    
+    // FILA 2
+    const f2 = Array(36).fill('');
+    f2[0] = '現場名';
+    f2[1] = obraData.nombreObra;
+    f2[32] = '至';
+    f2[33] = `令和　${añoReiwa}年　${periodo.mesFin}月 20日`;
+    aoa.push(f2);
+    
+    // FILA 3
+    const f3 = Array(36).fill('');
+    f3[0] = '１';
+    f3[6] = `（  ${periodo.mesInicio}月 ）`;
+    f3[21] = `（ ${periodo.mesFin}月 ）`;
+    f3[33] = '定時小計';
+    f3[34] = '残業小計';
+    aoa.push(f3);
+    
+    // FILA 4 - Días del mes
+    const f4 = Array(36).fill('');
+    f4[0] = 'No';
+    f4[1] = '氏　名';
+    let col = 2;
+    for (let d = 21; d <= diasMes1; d++) f4[col++] = d;
+    for (let d = 1; d <= diasMes2; d++) f4[col++] = d;
+    aoa.push(f4);
+    
+    // FILA 5 - Días de la semana
+    const f5 = Array(36).fill('');
+    const dias = ['日', '月', '火', '水', '木', '金', '土'];
+    col = 2;
+    for (let d = 21; d <= diasMes1; d++) {
+        const fecha = new Date(periodo.añoInicio, periodo.mesInicio - 1, d);
+        f5[col++] = dias[fecha.getDay()];
+    }
+    for (let d = 1; d <= diasMes2; d++) {
+        const fecha = new Date(periodo.añoFin, periodo.mesFin - 1, d);
+        f5[col++] = dias[fecha.getDay()];
+    }
+    aoa.push(f5);
+    
+    // EMPLEADOS
+    const empleados = Object.values(obraData.empleados);
+    empleados.forEach((emp, idx) => {
+        // Fila asistencia
+        const fAsist = Array(36).fill('');
+        fAsist[1] = emp.nombre;
+        col = 2;
+        for (let d = 21; d <= diasMes1; d++) {
+            fAsist[col++] = emp.asistencias[d] ? '出' : '';
+        }
+        for (let d = 1; d <= diasMes2; d++) {
+            fAsist[col++] = emp.asistencias[d] ? '出' : '';
+        }
+        const filaNum = aoa.length + 1;
+        fAsist[33] = `=COUNTIF(C${filaNum}:AG${filaNum},"出")`;
+        aoa.push(fAsist);
+        
+        // Fila horas extras
+        const fHE = Array(36).fill('');
+        fHE[0] = idx + 1;
+        fHE[1] = '残業時間';
+        col = 2;
+        for (let d = 21; d <= diasMes1; d++) {
+            const h = emp.horasExtras[d] || 0;
+            fHE[col++] = h > 0 ? h : '';
+        }
+        for (let d = 1; d <= diasMes2; d++) {
+            const h = emp.horasExtras[d] || 0;
+            fHE[col++] = h > 0 ? h : '';
+        }
+        const filaNumHE = aoa.length + 1;
+        fHE[34] = `=SUM(C${filaNumHE}:AG${filaNumHE})`;
+        aoa.push(fHE);
+    });
+    
+    // Crear hoja
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    
+    // Merged cells
+    ws['!merges'] = [
+        XLSX.utils.decode_range('B1:D1'),
+        XLSX.utils.decode_range('B2:D2'),
+        XLSX.utils.decode_range('AH1:AI1'),
+        XLSX.utils.decode_range('AH2:AI2'),
+        XLSX.utils.decode_range('G3:I3'),
+        XLSX.utils.decode_range('V3:Y3'),
+        XLSX.utils.decode_range('AH3:AH5'),
+        XLSX.utils.decode_range('AI3:AI5')
+    ];
+    
+    // Anchos de columna
+    ws['!cols'] = [
+        { wch: 9.71 },   // A
+        { wch: 17.14 },  // B
+        ...Array(31).fill({ wch: 3.57 }),  // C-AG (días)
+        { wch: 11 },     // AH
+        { wch: 11 }      // AI
+    ];
+    
+    return ws;
+}
+
+function sanitizarNombreHoja(nombre) {
+    return nombre.replace(/[:\\/?*\[\]]/g, '').substring(0, 31);
 }
 
 async function exportarReporteExcel() {
-    // Si no hay datos en el reporte, generar primero
-    const totalAsistencias = document.getElementById('reporteTotalAsistencias').textContent;
-    
-    if (totalAsistencias === '0') {
+    if (ultimasAsistenciasReporte.length === 0) {
         mostrarNotificacion('Primero debes generar el reporte', 'error');
         return;
     }
-    
-    // Si no hay datos guardados, obtenerlos de nuevo
-    if (ultimasAsistenciasReporte.length === 0) {
-        mostrarNotificacion('Genera el reporte primero', 'error');
-        return;
-    }
-    
-    // Preparar datos detallados
-    const datosDetallados = ultimasAsistenciasReporte.map(asist => ({
-        'Fecha': formatearFecha(asist.fecha),
-        'Cliente': asist.cliente_nombre || '-',
-        'Obra': asist.obra_nombre,
-        'Empleado': `${asist.empleado_nombre} ${asist.empleado_apellido}`,
-        'Cargo': asist.cargo || '-',
-        'Líder': `${asist.lider_nombre} ${asist.lider_apellido}`,
-        'Asistencia': asist.presente ? '出席' : '欠席',
-        'Jornada': formatearJornada(asist.tipo_jornada),
-        '残業': asist.horas_extras || 0
-    }));
-    
-    // Preparar resumen
-    const presentes = parseInt(document.getElementById('reportePresentes').textContent);
-    const ausentes = parseInt(document.getElementById('reporteAusentes').textContent);
-    const horasExtras = parseFloat(document.getElementById('reporteHorasExtras').textContent);
-    
-    const resumen = [
-        { 'Concepto': 'Total Registros', 'Valor': totalAsistencias },
-        { 'Concepto': '出席 (Presentes)', 'Valor': presentes },
-        { 'Concepto': '欠席 (Ausentes)', 'Valor': ausentes },
-        { 'Concepto': '残業 Total', 'Valor': horasExtras }
-    ];
-    
-    // Crear libro con dos hojas
-    const wb = XLSX.utils.book_new();
-    
-    // Hoja 1: Resumen
-    const wsResumen = XLSX.utils.json_to_sheet(resumen);
-    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
-    
-    // Hoja 2: Detalles
-    const wsDetalle = XLSX.utils.json_to_sheet(datosDetallados);
-    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle");
-    
-    // Generar nombre de archivo con fecha
-    const fecha = new Date().toISOString().split('T')[0];
-    const nombreArchivo = `reporte_asistencias_${fecha}.xlsx`;
-    
-    // Descargar
-    XLSX.writeFile(wb, nombreArchivo);
-    
-    mostrarNotificacion(`✓ Excel generado: ${nombreArchivo}`);
+    const temp = ultimasAsistenciasConsulta;
+    ultimasAsistenciasConsulta = ultimasAsistenciasReporte;
+    await exportarConsultasExcel();
+    ultimasAsistenciasConsulta = temp;
 }
 
 // =====================================================
