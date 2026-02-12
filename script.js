@@ -1304,8 +1304,12 @@ async function buscarAsistencias() {
         const response = await fetch(url);
         const asistencias = await response.json();
         
-        // Guardar para exportar
+        // Guardar para exportar (junto con las fechas exactas del formulario)
         ultimasAsistenciasConsulta = asistencias;
+        rangoFechasConsulta = {
+            desde: fechaDesde || asistencias[0]?.fecha || new Date().toISOString().split('T')[0],
+            hasta: fechaHasta || asistencias[asistencias.length - 1]?.fecha || new Date().toISOString().split('T')[0]
+        };
         
         const tbody = document.querySelector('#tablaConsultas tbody');
         tbody.innerHTML = '';
@@ -1420,8 +1424,9 @@ async function generarReporte() {
         
         const asistencias = await response.json();
         
-        // Guardar para exportar
+        // Guardar para exportar (junto con las fechas exactas del formulario)
         ultimasAsistenciasReporte = asistencias;
+        rangoFechasReporte = { desde: fechaDesde, hasta: fechaHasta };
         
         console.log('Asistencias recibidas:', asistencias.length);
         
@@ -1483,6 +1488,8 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 
 let ultimasAsistenciasConsulta = [];
 let ultimasAsistenciasReporte = [];
+let rangoFechasConsulta = { desde: null, hasta: null };
+let rangoFechasReporte = { desde: null, hasta: null };
 
 async function exportarConsultasExcel() {
     if (ultimasAsistenciasConsulta.length === 0) {
@@ -1490,7 +1497,11 @@ async function exportarConsultasExcel() {
         return;
     }
     try {
-        const agrupadoPorObra = agruparAsistenciasPorObraPeriodo(ultimasAsistenciasConsulta);
+        const agrupadoPorObra = agruparAsistenciasPorRango(
+            ultimasAsistenciasConsulta,
+            rangoFechasConsulta.desde,
+            rangoFechasConsulta.hasta
+        );
         if (agrupadoPorObra.length === 0) {
             mostrarNotificacion('出力するデータがありません', 'error');
             return;
@@ -1514,147 +1525,232 @@ async function exportarReporteExcel() {
         mostrarNotificacion('先にレポートを作成してください', 'error');
         return;
     }
-    const temp = ultimasAsistenciasConsulta;
-    ultimasAsistenciasConsulta = ultimasAsistenciasReporte;
-    await exportarConsultasExcel();
-    ultimasAsistenciasConsulta = temp;
+    try {
+        const agrupadoPorObra = agruparAsistenciasPorRango(
+            ultimasAsistenciasReporte,
+            rangoFechasReporte.desde,
+            rangoFechasReporte.hasta
+        );
+        if (agrupadoPorObra.length === 0) {
+            mostrarNotificacion('出力するデータがありません', 'error');
+            return;
+        }
+        const wb = XLSX.utils.book_new();
+        for (const obra of agrupadoPorObra) {
+            const ws = crearHojaKomeiDensetsu(obra);
+            XLSX.utils.book_append_sheet(wb, ws, sanitizarNombreHoja(obra.nombreObra));
+        }
+        const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        XLSX.writeFile(wb, `出勤表_${fecha}.xlsx`);
+        mostrarNotificacion('✓ Excel出力完了');
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('Excel出力エラー：' + error.message, 'error');
+    }
 }
 
-function agruparAsistenciasPorObraPeriodo(asistencias) {
+/**
+ * Agrupa asistencias por obra usando el rango de fechas exacto del formulario
+ */
+function agruparAsistenciasPorRango(asistencias, fechaDesde, fechaHasta) {
     const grupos = {};
+
+    // Calcular el rango de días a mostrar en el Excel
+    const inicio = new Date(fechaDesde + 'T00:00:00');
+    const fin    = new Date(fechaHasta + 'T00:00:00');
+
     asistencias.forEach(asist => {
-        const fecha = new Date(asist.fecha + 'T00:00:00');
-        const periodo = calcularPeriodoKomei(fecha);
-        const key = `${asist.obra_id}_${periodo.mesInicio}_${periodo.añoInicio}`;
+        const key = asist.obra_id;
         if (!grupos[key]) {
             grupos[key] = {
-                obraId: asist.obra_id,
-                nombreObra: asist.obra_nombre,
+                obraId:       asist.obra_id,
+                nombreObra:   asist.obra_nombre,
                 clienteNombre: asist.cliente_nombre || '',
-                periodo: periodo,
-                empleados: {}
+                fechaDesde:   inicio,
+                fechaHasta:   fin,
+                empleados:    {}
             };
         }
         const empKey = asist.empleado_id;
         if (!grupos[key].empleados[empKey]) {
             grupos[key].empleados[empKey] = {
-                nombre: `${asist.empleado_nombre}　${asist.empleado_apellido}`,
-                asistencias: {},
-                horasExtras: {}
+                nombre:      `${asist.empleado_nombre}　${asist.empleado_apellido}`,
+                asistencias: {},   // key: 'YYYY-MM-DD' → true/false
+                horasExtras: {}    // key: 'YYYY-MM-DD' → número
             };
         }
-        const dia = fecha.getDate();
-        grupos[key].empleados[empKey].asistencias[dia] = asist.presente;
-        grupos[key].empleados[empKey].horasExtras[dia] = parseFloat(asist.horas_extras) || 0;
+        grupos[key].empleados[empKey].asistencias[asist.fecha] = asist.presente;
+        grupos[key].empleados[empKey].horasExtras[asist.fecha]  = parseFloat(asist.horas_extras) || 0;
     });
+
     return Object.values(grupos);
 }
 
-function calcularPeriodoKomei(fecha) {
-    const year = fecha.getFullYear();
-    const month = fecha.getMonth() + 1; // 1-12
-    const day = fecha.getDate();
-    let mesInicio, añoInicio, mesFin, añoFin;
-    if (day >= 21) {
-        mesInicio = month;
-        añoInicio = year;
-        mesFin = month === 12 ? 1 : month + 1;
-        añoFin = month === 12 ? year + 1 : year;
-    } else {
-        mesInicio = month === 1 ? 12 : month - 1;
-        añoInicio = month === 1 ? year - 1 : year;
-        mesFin = month;
-        añoFin = year;
+/**
+ * Genera un array con todas las fechas entre dos fechas inclusive
+ */
+function generarRangoDias(desde, hasta) {
+    const dias = [];
+    const cur = new Date(desde);
+    while (cur <= hasta) {
+        dias.push(cur.toISOString().split('T')[0]); // 'YYYY-MM-DD'
+        cur.setDate(cur.getDate() + 1);
     }
-    return { mesInicio, añoInicio, mesFin, añoFin };
+    return dias;
 }
 
+/**
+ * Crea la hoja Excel en formato Komei Densetsu
+ * Las columnas de días reflejan EXACTAMENTE el rango elegido en el formulario
+ */
 function crearHojaKomeiDensetsu(obraData) {
-    const p = obraData.periodo;
-    const añoReiwa = p.añoInicio - 2018;
-    const diasMes1 = new Date(p.añoInicio, p.mesInicio, 0).getDate(); // último día del mesInicio
-    const dias = ['日', '月', '火', '水', '木', '金', '土'];
+    const diasSemana = ['日', '月', '火', '水', '木', '金', '土'];
+
+    // Rango exacto del formulario
+    const rangoDias = generarRangoDias(obraData.fechaDesde, obraData.fechaHasta);
+    const totalDias = rangoDias.length;
+
+    // Calcular año Reiwa para encabezado
+    const añoInicio  = obraData.fechaDesde.getFullYear();
+    const mesInicio  = obraData.fechaDesde.getMonth() + 1;
+    const diaInicio  = obraData.fechaDesde.getDate();
+    const añoFin     = obraData.fechaHasta.getFullYear();
+    const mesFin     = obraData.fechaHasta.getMonth() + 1;
+    const diaFin     = obraData.fechaHasta.getDate();
+    const añoReiwaIn = añoInicio - 2018;
+    const añoReiwaFn = añoFin - 2018;
+
+    // Cuántas columnas necesitamos: A, B, días..., AH (total), AI (残業計)
+    // Columnas de días: índices 2 .. 2+totalDias-1
+    // Total col: 2+totalDias  → AH
+    // Resumen col: 2+totalDias+1 → AI
+    const colTotal  = 2 + totalDias;       // índice base-0 de la columna "定時小計"
+    const colResumen = 2 + totalDias + 1;  // índice base-0 de la columna "残業小計"
+
+    // Helper: convierte índice de columna a letra(s) Excel
+    function colLetra(idx) {
+        return XLSX.utils.encode_col(idx);
+    }
+
     const aoa = [];
 
-    // FILA 1
-    const f1 = Array(36).fill('');
-    f1[0] = '会社名'; f1[1] = 'Komei Densetsu';
+    // ── FILA 1 ──────────────────────────────────────────────────
+    const f1 = Array(colResumen + 1).fill('');
+    f1[0] = '会社名';
+    f1[1] = 'Komei Densetsu';
     f1[16] = '出　　　勤　　　表';
-    f1[32] = '自'; f1[33] = `令和　${añoReiwa}年　${p.mesInicio}月 21日`;
+    f1[colTotal - 1] = '自';   // columna antes de totales → "自"
+    f1[colTotal]     = `令和　${añoReiwaIn}年　${mesInicio}月 ${diaInicio}日`;
     aoa.push(f1);
 
-    // FILA 2
-    const f2 = Array(36).fill('');
-    f2[0] = '現場名'; f2[1] = obraData.nombreObra;
-    f2[32] = '至'; f2[33] = `令和　${añoReiwa}年　${p.mesFin}月 20日`;
+    // ── FILA 2 ──────────────────────────────────────────────────
+    const f2 = Array(colResumen + 1).fill('');
+    f2[0] = '現場名';
+    f2[1] = obraData.nombreObra;
+    f2[colTotal - 1] = '至';
+    f2[colTotal]     = `令和　${añoReiwaFn}年　${mesFin}月 ${diaFin}日`;
     aoa.push(f2);
 
-    // FILA 3
-    const f3 = Array(36).fill('');
-    f3[0] = '１'; f3[6] = `（  ${p.mesInicio}月 ）`;
-    f3[21] = `（ ${p.mesFin}月 ）`;
-    f3[33] = '定時小計'; f3[34] = '残業小計';
+    // ── FILA 3 ──────────────────────────────────────────────────
+    const f3 = Array(colResumen + 1).fill('');
+    f3[0] = '１';
+    // Mostrar etiqueta de mes cuando cambia
+    let mesActual = null;
+    rangoDias.forEach((fechaStr, i) => {
+        const m = parseInt(fechaStr.split('-')[1]);
+        if (m !== mesActual) {
+            f3[2 + i] = `（ ${m}月 ）`;
+            mesActual = m;
+        }
+    });
+    f3[colTotal]    = '定時小計';
+    f3[colResumen]  = '残業小計';
     aoa.push(f3);
 
-    // FILA 4 - Días numéricos
-    const f4 = Array(36).fill('');
-    f4[0] = 'No'; f4[1] = '氏　名';
-    let col = 2;
-    for (let d = 21; d <= diasMes1; d++) f4[col++] = d;
-    for (let d = 1; d <= 20; d++) f4[col++] = d;
+    // ── FILA 4 – Días numéricos ──────────────────────────────────
+    const f4 = Array(colResumen + 1).fill('');
+    f4[0] = 'No';
+    f4[1] = '氏　名';
+    rangoDias.forEach((fechaStr, i) => {
+        f4[2 + i] = parseInt(fechaStr.split('-')[2]); // día del mes
+    });
     aoa.push(f4);
 
-    // FILA 5 - Días de la semana
-    const f5 = Array(36).fill('');
-    col = 2;
-    for (let d = 21; d <= diasMes1; d++) {
-        f5[col++] = dias[new Date(p.añoInicio, p.mesInicio - 1, d).getDay()];
-    }
-    for (let d = 1; d <= 20; d++) {
-        f5[col++] = dias[new Date(p.añoFin, p.mesFin - 1, d).getDay()];
-    }
+    // ── FILA 5 – Días de la semana ───────────────────────────────
+    const f5 = Array(colResumen + 1).fill('');
+    rangoDias.forEach((fechaStr, i) => {
+        const dow = new Date(fechaStr + 'T00:00:00').getDay();
+        f5[2 + i] = diasSemana[dow];
+    });
     aoa.push(f5);
 
-    // EMPLEADOS
-    Object.values(obraData.empleados).forEach((emp, idx) => {
-        // Fila asistencia
-        const fa = Array(36).fill('');
-        fa[1] = emp.nombre;
-        col = 2;
-        for (let d = 21; d <= diasMes1; d++) fa[col++] = emp.asistencias[d] ? '出' : '';
-        for (let d = 1; d <= 20; d++) fa[col++] = emp.asistencias[d] ? '出' : '';
-        const rAsist = aoa.length + 1;
-        fa[33] = `=COUNTIF(C${rAsist}:AG${rAsist},"出")`;
-        aoa.push(fa);
+    // ── EMPLEADOS ────────────────────────────────────────────────
+    // Guardamos las referencias de celdas de fórmulas para aplicar después
+    const formulasPendientes = []; // { cellRef, formula }
 
-        // Fila horas extras
-        const fhe = Array(36).fill('');
-        fhe[0] = idx + 1; fhe[1] = '残業時間';
-        col = 2;
-        for (let d = 21; d <= diasMes1; d++) { const h = emp.horasExtras[d] || 0; fhe[col++] = h > 0 ? h : ''; }
-        for (let d = 1; d <= 20; d++) { const h = emp.horasExtras[d] || 0; fhe[col++] = h > 0 ? h : ''; }
-        const rHE = aoa.length + 1;
-        fhe[34] = `=SUM(C${rHE}:AG${rHE})`;
+    Object.values(obraData.empleados).forEach((emp, idx) => {
+        // Fila de asistencia
+        const fa = Array(colResumen + 1).fill('');
+        fa[1] = emp.nombre;
+        rangoDias.forEach((fechaStr, i) => {
+            fa[2 + i] = emp.asistencias[fechaStr] ? '出' : '';
+        });
+        aoa.push(fa);
+        const filaAsist = aoa.length; // número de fila en Excel (1-based)
+
+        // Fórmula COUNTIF: cuenta "出" en el rango de días de esta fila
+        const colIni = colLetra(2);                 // primera columna de días
+        const colFin = colLetra(2 + totalDias - 1); // última columna de días
+        formulasPendientes.push({
+            cellRef: `${colLetra(colTotal)}${filaAsist}`,
+            formula: `COUNTIF(${colIni}${filaAsist}:${colFin}${filaAsist},"出")`
+        });
+
+        // Fila de horas extras
+        const fhe = Array(colResumen + 1).fill('');
+        fhe[0] = idx + 1;
+        fhe[1] = '残業時間';
+        rangoDias.forEach((fechaStr, i) => {
+            const h = emp.horasExtras[fechaStr] || 0;
+            fhe[2 + i] = h > 0 ? h : '';
+        });
         aoa.push(fhe);
+        const filaHE = aoa.length; // número de fila en Excel (1-based)
+
+        formulasPendientes.push({
+            cellRef: `${colLetra(colResumen)}${filaHE}`,
+            formula: `SUM(${colIni}${filaHE}:${colFin}${filaHE})`
+        });
     });
 
+    // Crear hoja a partir del array
     const ws = XLSX.utils.aoa_to_sheet(aoa);
 
+    // ── Aplicar fórmulas correctamente (tipo 'n' con campo 'f') ──
+    // aoa_to_sheet escribe strings; sobreescribimos con objeto de fórmula
+    formulasPendientes.forEach(({ cellRef, formula }) => {
+        ws[cellRef] = { t: 'n', f: formula };
+    });
+
+    // ── Merged cells ─────────────────────────────────────────────
+    const colTotalLetra   = colLetra(colTotal);
+    const colResumenLetra = colLetra(colResumen);
     ws['!merges'] = [
         XLSX.utils.decode_range('B1:D1'),
         XLSX.utils.decode_range('B2:D2'),
-        XLSX.utils.decode_range('AH1:AI1'),
-        XLSX.utils.decode_range('AH2:AI2'),
-        XLSX.utils.decode_range('G3:I3'),
-        XLSX.utils.decode_range('V3:Y3'),
-        XLSX.utils.decode_range('AH3:AH5'),
-        XLSX.utils.decode_range('AI3:AI5')
+        XLSX.utils.decode_range(`${colTotalLetra}1:${colResumenLetra}1`),
+        XLSX.utils.decode_range(`${colTotalLetra}2:${colResumenLetra}2`),
+        XLSX.utils.decode_range(`${colTotalLetra}3:${colTotalLetra}5`),
+        XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`)
     ];
 
+    // ── Anchos de columna ────────────────────────────────────────
     ws['!cols'] = [
-        { wch: 9.71 }, { wch: 17.14 },
-        ...Array(31).fill({ wch: 3.57 }),
-        { wch: 11 }, { wch: 11 }
+        { wch: 9.71 },   // A
+        { wch: 17.14 },  // B
+        ...Array(totalDias).fill({ wch: 3.57 }),  // columnas de días
+        { wch: 11 },     // 定時小計
+        { wch: 11 }      // 残業小計
     ];
 
     return ws;
