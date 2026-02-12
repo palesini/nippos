@@ -33,7 +33,7 @@ async function cargarDatosIniciales() {
         ]);
     } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
-        mostrarNotificacion('Error al conectar con el servidor. Asegúrate de que el servidor esté corriendo.', 'error');
+        mostrarNotificacion('サーバーに接続できません。サーバーが起動しているか確認してください。', 'error');
     }
 }
 
@@ -163,7 +163,7 @@ async function cargarEmpleadosRegistro() {
         actualizarEstadisticas();
     } catch (error) {
         console.error('Error al cargar empleados:', error);
-        mostrarNotificacion('Error al cargar empleados: ' + error.message, 'error');
+        mostrarNotificacion('作業員の読み込みエラー：' + error.message, 'error');
     }
 }
 
@@ -213,7 +213,7 @@ async function guardarAsistencias() {
     const obraId = document.getElementById('registroObra').value;
     
     if (!fecha || !obraId) {
-        mostrarNotificacion('Seleccione fecha y obra', 'error');
+        mostrarNotificacion('日付と現場を選択してください', 'error');
         return;
     }
     
@@ -222,7 +222,7 @@ async function guardarAsistencias() {
     const obra = obras.find(o => o.id == obraId);
     
     if (!obra || !obra.lider_id) {
-        mostrarNotificacion('La obra debe tener un líder asignado', 'error');
+        mostrarNotificacion('責任者を選択してください', 'error');
         return;
     }
     
@@ -236,7 +236,7 @@ async function guardarAsistencias() {
         }));
     
     if (registros.length === 0) {
-        mostrarNotificacion('Debe marcar al menos una asistencia', 'error');
+        mostrarNotificacion('少なくとも1人の出勤・欠勤を登録してください', 'error');
         return;
     }
     
@@ -253,15 +253,15 @@ async function guardarAsistencias() {
         });
         
         if (response.ok) {
-            mostrarNotificacion(`✓ ${registros.length} asistencias guardadas correctamente`);
+            mostrarNotificacion(`✓ ${registros.length}件の出勤データを保存しました`);
             registrosAsistencia = {};
             cargarEmpleadosRegistro();
         } else {
-            throw new Error('Error al guardar');
+            throw new Error('保存エラー');
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al guardar asistencias', 'error');
+        mostrarNotificacion('出勤保存エラー', 'error');
     }
 }
 
@@ -270,7 +270,7 @@ async function cargarAsistenciaExistente() {
     const obraId = document.getElementById('registroObra').value;
     
     if (!fecha || !obraId) {
-        mostrarNotificacion('Seleccione fecha y obra', 'error');
+        mostrarNotificacion('日付と現場を選択してください', 'error');
         return;
     }
     
@@ -279,7 +279,7 @@ async function cargarAsistenciaExistente() {
         const asistencias = await response.json();
         
         if (asistencias.length === 0) {
-            mostrarNotificacion('No hay registros para esta fecha y obra', 'error');
+            mostrarNotificacion('この日付と現場のデータがありません', 'error');
             return;
         }
         
@@ -299,7 +299,7 @@ async function cargarAsistenciaExistente() {
         mostrarNotificacion(`✓ Cargados ${asistencias.length} registros`);
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar registros', 'error');
+        mostrarNotificacion('データ読み込みエラー', 'error');
     }
 }
 
@@ -359,15 +359,15 @@ async function cargarTablaEmpleados() {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarEmpleado(${emp.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${emp.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar empleados', 'error');
+        mostrarNotificacion('作業員の読み込みエラー', 'error');
     }
 }
 
@@ -413,14 +413,14 @@ function previsualizarFoto(input) {
     if (file) {
         // Validar que sea una imagen
         if (!file.type.startsWith('image/')) {
-            mostrarNotificacion('Por favor seleccione una imagen válida', 'error');
+            mostrarNotificacion('有効な画像ファイルを選択してください', 'error');
             input.value = '';
             return;
         }
         
         // Validar tamaño (máximo 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            mostrarNotificacion('La imagen es muy grande. Máximo 5MB', 'error');
+            mostrarNotificacion('画像サイズが大きすぎます。最大5MBです', 'error');
             input.value = '';
             return;
         }
@@ -442,7 +442,7 @@ function previsualizarFoto(input) {
         };
         
         reader.onerror = function() {
-            mostrarNotificacion('Error al leer la imagen', 'error');
+            mostrarNotificacion('画像の読み込みエラー', 'error');
         };
         
         reader.readAsDataURL(file);
@@ -519,7 +519,7 @@ async function guardarEmpleado() {
     const estado = document.getElementById('empleadoEstado').value;
     
     if (!nombre || !apellido) {
-        mostrarNotificacion('Complete los campos obligatorios', 'error');
+        mostrarNotificacion('必須項目を入力してください', 'error');
         return;
     }
     
@@ -543,14 +543,14 @@ async function guardarEmpleado() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Empleado actualizado correctamente');
+            mostrarNotificacion('✓ 作業員情報を更新しました');
         } else {
             response = await fetch(`${API_URL}/empleados`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Empleado agregado correctamente');
+            mostrarNotificacion('✓ 作業員を追加しました');
         }
         
         if (response.ok) {
@@ -563,12 +563,12 @@ async function guardarEmpleado() {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al guardar empleado', 'error');
+        mostrarNotificacion('作業員保存エラー', 'error');
     }
 }
 
 async function eliminarEmpleado(id) {
-    if (!confirm('¿Está seguro de eliminar este empleado?')) return;
+    if (!confirm('この作業員を削除しますか？')) return;
     
     try {
         const response = await fetch(`${API_URL}/empleados/${id}`, {
@@ -581,7 +581,7 @@ async function eliminarEmpleado(id) {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al eliminar empleado', 'error');
+        mostrarNotificacion('作業員削除エラー', 'error');
     }
 }
 
@@ -636,15 +636,15 @@ async function cargarTablaClientes() {
                 <td>${cliente.telefono || '-'}</td>
                 <td>${cliente.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarCliente(${cliente.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${cliente.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar clientes', 'error');
+        mostrarNotificacion('取引先の読み込みエラー', 'error');
     }
 }
 
@@ -697,7 +697,7 @@ async function guardarCliente() {
     const direccion = document.getElementById('clienteDireccion').value.trim();
     
     if (!nombre) {
-        mostrarNotificacion('El nombre es obligatorio', 'error');
+        mostrarNotificacion('名前は必須です', 'error');
         return;
     }
     
@@ -711,14 +711,14 @@ async function guardarCliente() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Cliente actualizado correctamente');
+            mostrarNotificacion('✓ 取引先情報を更新しました');
         } else {
             response = await fetch(`${API_URL}/clientes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Cliente agregado correctamente');
+            mostrarNotificacion('✓ 取引先を追加しました');
         }
         
         if (response.ok) {
@@ -728,12 +728,12 @@ async function guardarCliente() {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al guardar cliente', 'error');
+        mostrarNotificacion('取引先保存エラー', 'error');
     }
 }
 
 async function eliminarCliente(id) {
-    if (!confirm('¿Está seguro de eliminar este cliente?')) return;
+    if (!confirm('この取引先を削除しますか？')) return;
     
     try {
         const response = await fetch(`${API_URL}/clientes/${id}`, {
@@ -746,7 +746,7 @@ async function eliminarCliente(id) {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al eliminar cliente', 'error');
+        mostrarNotificacion('取引先削除エラー', 'error');
     }
 }
 
@@ -808,15 +808,15 @@ async function cargarTablaObras() {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarObra(${obra.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarObra(${obra.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar obras', 'error');
+        mostrarNotificacion('現場の読み込みエラー', 'error');
     }
 }
 
@@ -914,7 +914,7 @@ async function guardarObra() {
     const estado = document.getElementById('obraEstado').value;
     
     if (!nombre || !cliente_id || !lider_id) {
-        mostrarNotificacion('Complete los campos obligatorios', 'error');
+        mostrarNotificacion('必須項目を入力してください', 'error');
         return;
     }
     
@@ -937,14 +937,14 @@ async function guardarObra() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Obra actualizada correctamente');
+            mostrarNotificacion('✓ 現場情報を更新しました');
         } else {
             response = await fetch(`${API_URL}/obras`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Obra agregada correctamente');
+            mostrarNotificacion('✓ 現場を追加しました');
         }
         
         if (response.ok) {
@@ -954,12 +954,12 @@ async function guardarObra() {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al guardar obra', 'error');
+        mostrarNotificacion('現場保存エラー', 'error');
     }
 }
 
 async function eliminarObra(id) {
-    if (!confirm('¿Está seguro de eliminar esta obra?')) return;
+    if (!confirm('この現場を削除しますか？')) return;
     
     try {
         const response = await fetch(`${API_URL}/obras/${id}`, {
@@ -972,7 +972,7 @@ async function eliminarObra(id) {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al eliminar obra', 'error');
+        mostrarNotificacion('現場削除エラー', 'error');
     }
 }
 
@@ -1110,7 +1110,7 @@ async function cargarEmpleadosDeObra(obraId) {
         actualizarEstadisticas();
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar empleados', 'error');
+        mostrarNotificacion('作業員の読み込みエラー', 'error');
     }
 }
 
@@ -1163,15 +1163,15 @@ async function cargarTablaLideres() {
                 <td>${lider.telefono || '-'}</td>
                 <td>${lider.email || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editarLider(${lider.id})">変更</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarLider(${lider.id})">削除</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al cargar líderes', 'error');
+        mostrarNotificacion('責任者の読み込みエラー', 'error');
     }
 }
 
@@ -1218,7 +1218,7 @@ async function guardarLider() {
     const email = document.getElementById('liderEmail').value.trim();
     
     if (!nombre || !apellido) {
-        mostrarNotificacion('Complete los campos obligatorios', 'error');
+        mostrarNotificacion('必須項目を入力してください', 'error');
         return;
     }
     
@@ -1232,14 +1232,14 @@ async function guardarLider() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Líder actualizado correctamente');
+            mostrarNotificacion('✓ 責任者情報を更新しました');
         } else {
             response = await fetch(`${API_URL}/lideres`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            mostrarNotificacion('✓ Líder agregado correctamente');
+            mostrarNotificacion('✓ 責任者を追加しました');
         }
         
         if (response.ok) {
@@ -1249,12 +1249,12 @@ async function guardarLider() {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al guardar líder', 'error');
+        mostrarNotificacion('責任者保存エラー', 'error');
     }
 }
 
 async function eliminarLider(id) {
-    if (!confirm('¿Está seguro de eliminar este líder?')) return;
+    if (!confirm('この責任者を削除しますか？')) return;
     
     try {
         const response = await fetch(`${API_URL}/lideres/${id}`, {
@@ -1267,7 +1267,7 @@ async function eliminarLider(id) {
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al eliminar líder', 'error');
+        mostrarNotificacion('責任者削除エラー', 'error');
     }
 }
 
@@ -1311,7 +1311,7 @@ async function buscarAsistencias() {
         tbody.innerHTML = '';
         
         if (asistencias.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No se encontraron resultados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">データが見つかりません</td></tr>';
             ultimasAsistenciasConsulta = [];
             return;
         }
@@ -1327,7 +1327,7 @@ async function buscarAsistencias() {
                 <td>${asist.lider_nombre} ${asist.lider_apellido}</td>
                 <td>
                     <span class="badge ${asist.presente ? 'badge-success' : 'badge-danger'}">
-                        ${asist.presente ? 'Presente' : 'Ausente'}
+                        ${asist.presente ? '出席' : '欠席'}
                     </span>
                 </td>
                 <td>${formatearJornada(asist.tipo_jornada)}</td>
@@ -1336,10 +1336,10 @@ async function buscarAsistencias() {
             tbody.appendChild(tr);
         });
         
-        mostrarNotificacion(`✓ Se encontraron ${asistencias.length} registros`);
+        mostrarNotificacion(`✓ ${asistencias.length}件のデータが見つかりました`);
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error al buscar asistencias', 'error');
+        mostrarNotificacion('検索エラー', 'error');
     }
 }
 
@@ -1394,13 +1394,13 @@ async function generarReporte() {
     const liderId = document.getElementById('reporteLider').value;
     
     if (!fechaDesde || !fechaHasta) {
-        mostrarNotificacion('Seleccione el rango de fechas', 'error');
+        mostrarNotificacion('日付を選択してください', 'error');
         return;
     }
     
     // Validar que fecha desde no sea mayor que fecha hasta
     if (fechaDesde > fechaHasta) {
-        mostrarNotificacion('La fecha inicial no puede ser mayor que la fecha final', 'error');
+        mostrarNotificacion('開始日は終了日より前でなければなりません', 'error');
         return;
     }
     
@@ -1438,13 +1438,13 @@ async function generarReporte() {
         
         if (totalAsistencias === 0) {
             ultimasAsistenciasReporte = [];
-            mostrarNotificacion('⚠️ No se encontraron registros en el rango seleccionado', 'error');
+            mostrarNotificacion('⚠️ 選択した期間にデータがありません', 'error');
         } else {
-            mostrarNotificacion(`✓ Reporte generado: ${totalAsistencias} registros encontrados`);
+            mostrarNotificacion(`✓ レポート作成完了：${totalAsistencias}件`);
         }
     } catch (error) {
         console.error('Error completo:', error);
-        mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
+        mostrarNotificacion('レポートエラー：' + error.message, 'error');
     }
 }
 
@@ -1460,9 +1460,9 @@ function formatearFecha(fecha) {
 
 function formatearJornada(tipo) {
     const tipos = {
-        'dia': 'Día',
-        'noche': 'Noche',
-        'dia_noche': 'Día y Noche'
+        'dia': '昼',
+        'noche': '夜',
+        'dia_noche': '昼夜'
     };
     return tipos[tipo] || tipo;
 }
@@ -1484,220 +1484,162 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 let ultimasAsistenciasConsulta = [];
 let ultimasAsistenciasReporte = [];
 
-/**
- * Exporta las consultas en formato Komei Densetsu (出勤表)
- */
 async function exportarConsultasExcel() {
     if (ultimasAsistenciasConsulta.length === 0) {
-        mostrarNotificacion('Primero debes buscar asistencias', 'error');
+        mostrarNotificacion('先に検索してください', 'error');
         return;
     }
-    
     try {
         const agrupadoPorObra = agruparAsistenciasPorObraPeriodo(ultimasAsistenciasConsulta);
-        
         if (agrupadoPorObra.length === 0) {
-            mostrarNotificacion('No hay datos para exportar', 'error');
+            mostrarNotificacion('出力するデータがありません', 'error');
             return;
         }
-        
         const wb = XLSX.utils.book_new();
-        
         for (const obra of agrupadoPorObra) {
             const ws = crearHojaKomeiDensetsu(obra);
-            const nombreHoja = sanitizarNombreHoja(obra.nombreObra);
-            XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+            XLSX.utils.book_append_sheet(wb, ws, sanitizarNombreHoja(obra.nombreObra));
         }
-        
         const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
         XLSX.writeFile(wb, `出勤表_${fecha}.xlsx`);
-        
-        mostrarNotificacion('✓ Excel generado en formato Komei Densetsu');
+        mostrarNotificacion('✓ Excel出力完了');
     } catch (error) {
         console.error('Error:', error);
-        mostrarNotificacion('Error: ' + error.message, 'error');
+        mostrarNotificacion('Excel出力エラー：' + error.message, 'error');
     }
 }
 
-/**
- * Agrupa asistencias por obra y período (21-20)
- */
+async function exportarReporteExcel() {
+    if (ultimasAsistenciasReporte.length === 0) {
+        mostrarNotificacion('先にレポートを作成してください', 'error');
+        return;
+    }
+    const temp = ultimasAsistenciasConsulta;
+    ultimasAsistenciasConsulta = ultimasAsistenciasReporte;
+    await exportarConsultasExcel();
+    ultimasAsistenciasConsulta = temp;
+}
+
 function agruparAsistenciasPorObraPeriodo(asistencias) {
     const grupos = {};
-    
     asistencias.forEach(asist => {
         const fecha = new Date(asist.fecha + 'T00:00:00');
         const periodo = calcularPeriodoKomei(fecha);
-        const key = `${asist.obra_id}_${periodo.inicio}`;
-        
+        const key = `${asist.obra_id}_${periodo.mesInicio}_${periodo.añoInicio}`;
         if (!grupos[key]) {
             grupos[key] = {
                 obraId: asist.obra_id,
                 nombreObra: asist.obra_nombre,
-                clienteNombre: asist.cliente_nombre || 'Cliente',
+                clienteNombre: asist.cliente_nombre || '',
                 periodo: periodo,
                 empleados: {}
             };
         }
-        
         const empKey = asist.empleado_id;
         if (!grupos[key].empleados[empKey]) {
             grupos[key].empleados[empKey] = {
-                id: asist.empleado_id,
                 nombre: `${asist.empleado_nombre}　${asist.empleado_apellido}`,
                 asistencias: {},
                 horasExtras: {}
             };
         }
-        
         const dia = fecha.getDate();
         grupos[key].empleados[empKey].asistencias[dia] = asist.presente;
         grupos[key].empleados[empKey].horasExtras[dia] = parseFloat(asist.horas_extras) || 0;
     });
-    
     return Object.values(grupos);
 }
 
-/**
- * Calcula período Komei (21 al 20)
- */
 function calcularPeriodoKomei(fecha) {
     const year = fecha.getFullYear();
-    const month = fecha.getMonth();
+    const month = fecha.getMonth() + 1; // 1-12
     const day = fecha.getDate();
-    
     let mesInicio, añoInicio, mesFin, añoFin;
-    
     if (day >= 21) {
-        mesInicio = month + 1;
-        añoInicio = year;
-        mesFin = month + 2;
-        añoFin = year;
-        if (mesFin > 12) {
-            mesFin = 1;
-            añoFin++;
-        }
-    } else {
         mesInicio = month;
         añoInicio = year;
-        mesFin = month + 1;
+        mesFin = month === 12 ? 1 : month + 1;
+        añoFin = month === 12 ? year + 1 : year;
+    } else {
+        mesInicio = month === 1 ? 12 : month - 1;
+        añoInicio = month === 1 ? year - 1 : year;
+        mesFin = month;
         añoFin = year;
-        if (mesInicio < 1) {
-            mesInicio = 12;
-            añoInicio--;
-        }
     }
-    
-    return {
-        mesInicio,
-        añoInicio,
-        mesFin,
-        añoFin
-    };
+    return { mesInicio, añoInicio, mesFin, añoFin };
 }
 
-/**
- * Crea hoja Excel en formato Komei Densetsu exacto
- */
 function crearHojaKomeiDensetsu(obraData) {
-    const periodo = obraData.periodo;
-    const añoReiwa = periodo.añoInicio - 2018;
-    
-    // Calcular días en cada mes
-    const diasMes1 = new Date(periodo.añoInicio, periodo.mesInicio, 0).getDate();
-    const diasMes2 = 20;
-    
-    // Array para datos
+    const p = obraData.periodo;
+    const añoReiwa = p.añoInicio - 2018;
+    const diasMes1 = new Date(p.añoInicio, p.mesInicio, 0).getDate(); // último día del mesInicio
+    const dias = ['日', '月', '火', '水', '木', '金', '土'];
     const aoa = [];
-    
+
     // FILA 1
     const f1 = Array(36).fill('');
-    f1[0] = '会社名';
-    f1[1] = 'Komei Densetsu';
+    f1[0] = '会社名'; f1[1] = 'Komei Densetsu';
     f1[16] = '出　　　勤　　　表';
-    f1[32] = '自';
-    f1[33] = `令和　${añoReiwa}年　${periodo.mesInicio}月 21日`;
+    f1[32] = '自'; f1[33] = `令和　${añoReiwa}年　${p.mesInicio}月 21日`;
     aoa.push(f1);
-    
+
     // FILA 2
     const f2 = Array(36).fill('');
-    f2[0] = '現場名';
-    f2[1] = obraData.nombreObra;
-    f2[32] = '至';
-    f2[33] = `令和　${añoReiwa}年　${periodo.mesFin}月 20日`;
+    f2[0] = '現場名'; f2[1] = obraData.nombreObra;
+    f2[32] = '至'; f2[33] = `令和　${añoReiwa}年　${p.mesFin}月 20日`;
     aoa.push(f2);
-    
+
     // FILA 3
     const f3 = Array(36).fill('');
-    f3[0] = '１';
-    f3[6] = `（  ${periodo.mesInicio}月 ）`;
-    f3[21] = `（ ${periodo.mesFin}月 ）`;
-    f3[33] = '定時小計';
-    f3[34] = '残業小計';
+    f3[0] = '１'; f3[6] = `（  ${p.mesInicio}月 ）`;
+    f3[21] = `（ ${p.mesFin}月 ）`;
+    f3[33] = '定時小計'; f3[34] = '残業小計';
     aoa.push(f3);
-    
-    // FILA 4 - Días del mes
+
+    // FILA 4 - Días numéricos
     const f4 = Array(36).fill('');
-    f4[0] = 'No';
-    f4[1] = '氏　名';
+    f4[0] = 'No'; f4[1] = '氏　名';
     let col = 2;
     for (let d = 21; d <= diasMes1; d++) f4[col++] = d;
-    for (let d = 1; d <= diasMes2; d++) f4[col++] = d;
+    for (let d = 1; d <= 20; d++) f4[col++] = d;
     aoa.push(f4);
-    
+
     // FILA 5 - Días de la semana
     const f5 = Array(36).fill('');
-    const dias = ['日', '月', '火', '水', '木', '金', '土'];
     col = 2;
     for (let d = 21; d <= diasMes1; d++) {
-        const fecha = new Date(periodo.añoInicio, periodo.mesInicio - 1, d);
-        f5[col++] = dias[fecha.getDay()];
+        f5[col++] = dias[new Date(p.añoInicio, p.mesInicio - 1, d).getDay()];
     }
-    for (let d = 1; d <= diasMes2; d++) {
-        const fecha = new Date(periodo.añoFin, periodo.mesFin - 1, d);
-        f5[col++] = dias[fecha.getDay()];
+    for (let d = 1; d <= 20; d++) {
+        f5[col++] = dias[new Date(p.añoFin, p.mesFin - 1, d).getDay()];
     }
     aoa.push(f5);
-    
+
     // EMPLEADOS
-    const empleados = Object.values(obraData.empleados);
-    empleados.forEach((emp, idx) => {
+    Object.values(obraData.empleados).forEach((emp, idx) => {
         // Fila asistencia
-        const fAsist = Array(36).fill('');
-        fAsist[1] = emp.nombre;
+        const fa = Array(36).fill('');
+        fa[1] = emp.nombre;
         col = 2;
-        for (let d = 21; d <= diasMes1; d++) {
-            fAsist[col++] = emp.asistencias[d] ? '出' : '';
-        }
-        for (let d = 1; d <= diasMes2; d++) {
-            fAsist[col++] = emp.asistencias[d] ? '出' : '';
-        }
-        const filaNum = aoa.length + 1;
-        fAsist[33] = `=COUNTIF(C${filaNum}:AG${filaNum},"出")`;
-        aoa.push(fAsist);
-        
+        for (let d = 21; d <= diasMes1; d++) fa[col++] = emp.asistencias[d] ? '出' : '';
+        for (let d = 1; d <= 20; d++) fa[col++] = emp.asistencias[d] ? '出' : '';
+        const rAsist = aoa.length + 1;
+        fa[33] = `=COUNTIF(C${rAsist}:AG${rAsist},"出")`;
+        aoa.push(fa);
+
         // Fila horas extras
-        const fHE = Array(36).fill('');
-        fHE[0] = idx + 1;
-        fHE[1] = '残業時間';
+        const fhe = Array(36).fill('');
+        fhe[0] = idx + 1; fhe[1] = '残業時間';
         col = 2;
-        for (let d = 21; d <= diasMes1; d++) {
-            const h = emp.horasExtras[d] || 0;
-            fHE[col++] = h > 0 ? h : '';
-        }
-        for (let d = 1; d <= diasMes2; d++) {
-            const h = emp.horasExtras[d] || 0;
-            fHE[col++] = h > 0 ? h : '';
-        }
-        const filaNumHE = aoa.length + 1;
-        fHE[34] = `=SUM(C${filaNumHE}:AG${filaNumHE})`;
-        aoa.push(fHE);
+        for (let d = 21; d <= diasMes1; d++) { const h = emp.horasExtras[d] || 0; fhe[col++] = h > 0 ? h : ''; }
+        for (let d = 1; d <= 20; d++) { const h = emp.horasExtras[d] || 0; fhe[col++] = h > 0 ? h : ''; }
+        const rHE = aoa.length + 1;
+        fhe[34] = `=SUM(C${rHE}:AG${rHE})`;
+        aoa.push(fhe);
     });
-    
-    // Crear hoja
+
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    
-    // Merged cells
+
     ws['!merges'] = [
         XLSX.utils.decode_range('B1:D1'),
         XLSX.utils.decode_range('B2:D2'),
@@ -1708,32 +1650,18 @@ function crearHojaKomeiDensetsu(obraData) {
         XLSX.utils.decode_range('AH3:AH5'),
         XLSX.utils.decode_range('AI3:AI5')
     ];
-    
-    // Anchos de columna
+
     ws['!cols'] = [
-        { wch: 9.71 },   // A
-        { wch: 17.14 },  // B
-        ...Array(31).fill({ wch: 3.57 }),  // C-AG (días)
-        { wch: 11 },     // AH
-        { wch: 11 }      // AI
+        { wch: 9.71 }, { wch: 17.14 },
+        ...Array(31).fill({ wch: 3.57 }),
+        { wch: 11 }, { wch: 11 }
     ];
-    
+
     return ws;
 }
 
 function sanitizarNombreHoja(nombre) {
     return nombre.replace(/[:\\/?*\[\]]/g, '').substring(0, 31);
-}
-
-async function exportarReporteExcel() {
-    if (ultimasAsistenciasReporte.length === 0) {
-        mostrarNotificacion('Primero debes generar el reporte', 'error');
-        return;
-    }
-    const temp = ultimasAsistenciasConsulta;
-    ultimasAsistenciasConsulta = ultimasAsistenciasReporte;
-    await exportarConsultasExcel();
-    ultimasAsistenciasConsulta = temp;
 }
 
 // =====================================================
