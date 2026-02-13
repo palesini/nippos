@@ -1,58 +1,32 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 import os
-import shutil
-import threading
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
 DATABASE = 'asistencias.db'
-BACKUP_DIR = 'backups'
-BACKUP_KEEP_DAYS = 30  # Días de respaldo a conservar
 
 # =====================================================
-# BACKUP AUTOMÁTICO DIARIO
+# RUTAS FRONTEND
 # =====================================================
 
-def realizar_backup():
-    """Crea una copia de respaldo de la DB con la fecha del día."""
-    try:
-        if not os.path.exists(DATABASE):
-            return
+@app.route('/')
+def index():
+    """Sirve el archivo index.html"""
+    return send_from_directory('.', 'index.html')
 
-        os.makedirs(BACKUP_DIR, exist_ok=True)
-        fecha_hoy = datetime.now().strftime('%Y%m%d')
-        destino = os.path.join(BACKUP_DIR, f'asistencias_{fecha_hoy}.db')
+@app.route('/<path:path>')
+def send_static(path):
+    """Sirve archivos estáticos (CSS, JS, imágenes)"""
+    return send_from_directory('.', path)
 
-        # Solo hacer backup si no existe uno de hoy
-        if not os.path.exists(destino):
-            shutil.copy2(DATABASE, destino)
-            print(f'[Backup] Respaldo creado: {destino}')
-
-        # Limpiar respaldos más viejos que BACKUP_KEEP_DAYS
-        from datetime import timedelta
-        limite = datetime.now() - timedelta(days=BACKUP_KEEP_DAYS)
-        for archivo in os.listdir(BACKUP_DIR):
-            if archivo.startswith('asistencias_') and archivo.endswith('.db'):
-                fecha_str = archivo.replace('asistencias_', '').replace('.db', '')
-                try:
-                    fecha_archivo = datetime.strptime(fecha_str, '%Y%m%d')
-                    if fecha_archivo < limite:
-                        os.remove(os.path.join(BACKUP_DIR, archivo))
-                        print(f'[Backup] Respaldo antiguo eliminado: {archivo}')
-                except ValueError:
-                    pass
-    except Exception as e:
-        print(f'[Backup] Error al crear respaldo: {e}')
-    finally:
-        # Programar el próximo backup en 24 horas
-        timer = threading.Timer(86400, realizar_backup)
-        timer.daemon = True  # Se detiene cuando termina el proceso principal
-        timer.start()
+# =====================================================
+# FUNCIONES DE BASE DE DATOS
+# =====================================================
 
 def get_db():
     """Obtiene una conexión a la base de datos"""
@@ -298,14 +272,14 @@ def delete_lider(id):
 
 @app.route('/api/empleados', methods=['GET'])
 def get_empleados():
-    estado = request.args.get('estado')
     conn = get_db()
     cursor = conn.cursor()
     
-    if estado:
-        cursor.execute('SELECT * FROM empleados WHERE estado = ? ORDER BY nombre, apellido', (estado,))
-    else:
+    estado = request.args.get('estado', 'activo')
+    if estado == 'todos':
         cursor.execute('SELECT * FROM empleados ORDER BY nombre, apellido')
+    else:
+        cursor.execute('SELECT * FROM empleados WHERE estado = ? ORDER BY nombre, apellido', (estado,))
     
     empleados = [dict(row) for row in cursor.fetchall()]
     conn.close()
@@ -454,46 +428,11 @@ def registrar_asistencias():
     conn = get_db()
     cursor = conn.cursor()
     
-    fecha    = data['fecha']
-    obra_id  = data['obra_id']
+    fecha = data['fecha']
+    obra_id = data['obra_id']
     lider_id = data['lider_id']
     registros = data['registros']
     
-    # ── Validar conflictos: empleados que ya marcaron PRESENTE en otra obra ese día ──
-    empleados_presentes = [
-        r['empleado_id'] for r in registros if r.get('presente') == True
-    ]
-    
-    conflictos = []
-    if empleados_presentes:
-        placeholders = ','.join('?' * len(empleados_presentes))
-        cursor.execute(f'''
-            SELECT a.empleado_id,
-                   e.nombre || '　' || e.apellido AS nombre_completo,
-                   o.nombre AS otra_obra
-            FROM asistencias a
-            INNER JOIN empleados e ON a.empleado_id = e.id
-            INNER JOIN obras o ON a.obra_id = o.id
-            WHERE a.fecha = ?
-              AND a.obra_id != ?
-              AND a.presente = 1
-              AND a.empleado_id IN ({placeholders})
-        ''', [fecha, obra_id] + empleados_presentes)
-        conflictos = [dict(row) for row in cursor.fetchall()]
-    
-    if conflictos:
-        conn.close()
-        # Armar mensaje en japonés con cada conflicto
-        detalles = ', '.join(
-            f"{c['nombre_completo']}（{c['otra_obra']}）" for c in conflictos
-        )
-        return jsonify({
-            'error': 'conflict',
-            'message': f'以下の作業員は既に別の現場で出勤済みです：{detalles}',
-            'conflictos': conflictos
-        }), 409
-
-    # ── Sin conflictos: guardar ──────────────────────────────────
     # Eliminar asistencias existentes para esa fecha y obra
     cursor.execute('DELETE FROM asistencias WHERE fecha = ? AND obra_id = ?', (fecha, obra_id))
     
@@ -593,10 +532,8 @@ if __name__ == '__main__':
         # Verificar que existan las tablas
         init_db()
     
-    # Iniciar backup automático diario
-    realizar_backup()
-    print(f'[Backup] Respaldo automático activado (cada 24hs → carpeta /{BACKUP_DIR}/)')
-    
-    print('Servidor iniciado en http://localhost:5000')
+    # Configurar puerto dinámico para Railway/Render
+    port = int(os.environ.get('PORT', 5000))
+    print(f'Servidor iniciado en puerto {port}')
     print('Presiona CTRL+C para detener')
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=port)
