@@ -1698,37 +1698,75 @@ function crearHojaKomeiDensetsu(obraData) {
     const colIni = colLetra(2);
     const colFin = colLetra(2 + totalDias - 1);
 
+    // Guardar referencias de filas de asistencia y HE para el gran total
+    const filasAsistencia = [];  // filas (1-based) de cada empleado
+    const filasHorasExtras = [];
+
     Object.values(obraData.empleados).forEach((emp, idx) => {
-        // Fila de asistencia
+        // Fila de asistencia — número va aquí (columna A)
         const fa = Array(colResumen + 1).fill('');
+        fa[0] = idx + 1;        // ← número de empleado en la fila del nombre
         fa[1] = emp.nombre;
         rangoDias.forEach((fechaStr, i) => {
             fa[2 + i] = emp.asistencias[fechaStr] ? '出' : '';
         });
         aoa.push(fa);
         const filaAsist = aoa.length; // 1-based
+        filasAsistencia.push(filaAsist);
 
         formulasPendientes.push({
             cellRef: `${colLetra(colTotal)}${filaAsist}`,
             formula: `COUNTIF(${colIni}${filaAsist}:${colFin}${filaAsist},"出")`
         });
 
-        // Fila de horas extras
+        // Fila de horas extras — sin número (columna A vacía)
         const fhe = Array(colResumen + 1).fill('');
-        fhe[0] = idx + 1;
-        fhe[1] = '残業時間';
+        fhe[1] = '残業時間';    // ← columna A queda vacía
         rangoDias.forEach((fechaStr, i) => {
             const h = emp.horasExtras[fechaStr] || 0;
             fhe[2 + i] = h > 0 ? h : '';
         });
         aoa.push(fhe);
         const filaHE = aoa.length; // 1-based
+        filasHorasExtras.push(filaHE);
 
         formulasPendientes.push({
             cellRef: `${colLetra(colResumen)}${filaHE}`,
             formula: `SUM(${colIni}${filaHE}:${colFin}${filaHE})`
         });
     });
+
+    // ── GRAN TOTAL ───────────────────────────────────────────────
+    // Fila de total de asistencias
+    const ftA = Array(colResumen + 1).fill('');
+    ftA[1] = '合　計';
+    aoa.push(ftA);
+    const filaGranTotalAsist = aoa.length;
+
+    // Fila de total de horas extras
+    const ftHE = Array(colResumen + 1).fill('');
+    ftHE[1] = '残業合計';
+    aoa.push(ftHE);
+    const filaGranTotalHE = aoa.length;
+
+    // Fórmulas del gran total: sumar las celdas de totales de cada empleado
+    if (filasAsistencia.length > 0) {
+        const sumaAsist = filasAsistencia
+            .map(f => `${colLetra(colTotal)}${f}`)
+            .join('+');
+        formulasPendientes.push({
+            cellRef: `${colLetra(colTotal)}${filaGranTotalAsist}`,
+            formula: sumaAsist
+        });
+
+        const sumaHE = filasHorasExtras
+            .map(f => `${colLetra(colResumen)}${f}`)
+            .join('+');
+        formulasPendientes.push({
+            cellRef: `${colLetra(colResumen)}${filaGranTotalHE}`,
+            formula: sumaHE
+        });
+    }
 
     // Crear hoja desde array-of-arrays
     const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -1741,13 +1779,20 @@ function crearHojaKomeiDensetsu(obraData) {
     // Merged cells
     const colTotalLetra   = colLetra(colTotal);
     const colResumenLetra = colLetra(colResumen);
+    // Título 出勤表: columna Q (índice 16) a columna X (índice 23) → 8 columnas centradas
+    const colTituloIni = colLetra(16);
+    const colTituloFin = colLetra(23);
     ws['!merges'] = [
         XLSX.utils.decode_range('B1:D1'),
         XLSX.utils.decode_range('B2:D2'),
+        XLSX.utils.decode_range(`${colTituloIni}1:${colTituloFin}1`),   // 出　　　勤　　　表
         XLSX.utils.decode_range(`${colTotalLetra}1:${colResumenLetra}1`),
         XLSX.utils.decode_range(`${colTotalLetra}2:${colResumenLetra}2`),
         XLSX.utils.decode_range(`${colTotalLetra}3:${colTotalLetra}5`),
-        XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`)
+        XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`),
+        // Gran total — merge de la etiqueta en columna B
+        XLSX.utils.decode_range(`B${filaGranTotalAsist}:D${filaGranTotalAsist}`),
+        XLSX.utils.decode_range(`B${filaGranTotalHE}:D${filaGranTotalHE}`)
     ];
 
     // Anchos de columna
