@@ -71,7 +71,6 @@ function inicializarValidacionFechas() {
 // =====================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Inicializando aplicación...');
     
     // Establecer fecha actual
     const today = new Date().toISOString().split('T')[0];
@@ -83,7 +82,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Cargar datos iniciales
     await cargarDatosIniciales();
     
-    console.log('Aplicación inicializada correctamente');
 });
 
 async function cargarDatosIniciales() {
@@ -96,7 +94,6 @@ async function cargarDatosIniciales() {
             cargarEmpleadosRegistro()
         ]);
     } catch (error) {
-        console.error('Error al cargar datos iniciales:', error);
         mostrarNotificacion('サーバーに接続できません。サーバーが起動しているか確認してください。', 'error');
     }
 }
@@ -106,7 +103,6 @@ async function cargarDatosIniciales() {
 // =====================================================
 
 function changeView(viewName) {
-    console.log('Cambiando a vista:', viewName);
     
     // Actualizar botones de navegación
     document.querySelectorAll('.nav-item').forEach(btn => {
@@ -226,7 +222,6 @@ async function cargarEmpleadosRegistro() {
         
         actualizarEstadisticas();
     } catch (error) {
-        console.error('Error al cargar empleados:', error);
         mostrarNotificacion('作業員の読み込みエラー：' + error.message, 'error');
     }
 }
@@ -331,7 +326,6 @@ async function guardarAsistencias() {
             throw new Error('保存エラー');
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('出勤保存エラー', 'error');
     }
 }
@@ -369,7 +363,6 @@ async function cargarAsistenciaExistente() {
         cargarEmpleadosRegistro();
         mostrarNotificacion(`✓ Cargados ${asistencias.length} registros`);
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('データ読み込みエラー', 'error');
     }
 }
@@ -391,7 +384,6 @@ async function cargarEmpleados() {
             });
         }
     } catch (error) {
-        console.error('Error al cargar empleados:', error);
     }
 }
 
@@ -437,7 +429,6 @@ async function cargarTablaEmpleados() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('作業員の読み込みエラー', 'error');
     }
 }
@@ -575,7 +566,6 @@ async function editarEmpleado(id) {
         
         document.getElementById('modalEmpleado').classList.add('active');
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -633,7 +623,6 @@ async function guardarEmpleado() {
             fotoBase64 = null;
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('作業員保存エラー', 'error');
     }
 }
@@ -651,7 +640,6 @@ async function eliminarEmpleado(id) {
             cargarTablaEmpleados();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('作業員削除エラー', 'error');
     }
 }
@@ -679,7 +667,6 @@ async function cargarClientes() {
         
         // NO tocar el select 'obraCliente' aquí, se carga solo cuando se abre el modal
     } catch (error) {
-        console.error('Error al cargar clientes:', error);
     }
 }
 
@@ -714,7 +701,6 @@ async function cargarTablaClientes() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('取引先の読み込みエラー', 'error');
     }
 }
@@ -754,7 +740,6 @@ async function editarCliente(id) {
         
         document.getElementById('modalCliente').classList.add('active');
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -798,7 +783,6 @@ async function guardarCliente() {
             cargarClientes();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('取引先保存エラー', 'error');
     }
 }
@@ -816,7 +800,6 @@ async function eliminarCliente(id) {
             cargarTablaClientes();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('取引先削除エラー', 'error');
     }
 }
@@ -843,7 +826,6 @@ async function cargarObras() {
             }
         });
     } catch (error) {
-        console.error('Error al cargar obras:', error);
     }
 }
 
@@ -886,7 +868,6 @@ async function cargarTablaObras() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('現場の読み込みエラー', 'error');
     }
 }
@@ -930,7 +911,6 @@ async function cargarClientesYLideresParaObra() {
             selectLider.innerHTML += `<option value="${lider.id}">${esc(lider.nombre)} ${esc(lider.apellido)}</option>`;
         });
     } catch (error) {
-        console.error('Error al cargar clientes y líderes:', error);
     }
 }
 
@@ -970,7 +950,6 @@ async function editarObra(id) {
         
         document.getElementById('modalObra').classList.add('active');
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -1024,7 +1003,6 @@ async function guardarObra() {
             cargarObras();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('現場保存エラー', 'error');
     }
 }
@@ -1042,7 +1020,6 @@ async function eliminarObra(id) {
             cargarTablaObras();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('現場削除エラー', 'error');
     }
 }
@@ -1073,7 +1050,6 @@ async function cargarEmpleadosParaObra() {
             container.appendChild(div);
         });
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -1114,7 +1090,6 @@ async function cargarInfoObra() {
             cargarEmpleadosDeObra(obraId);
         }
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -1180,7 +1155,6 @@ async function cargarEmpleadosDeObra(obraId) {
         
         actualizarEstadisticas();
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('作業員の読み込みエラー', 'error');
     }
 }
@@ -1208,7 +1182,6 @@ async function cargarLideres() {
         
         // NO tocar el select 'obraLider' aquí, se carga solo cuando se abre el modal
     } catch (error) {
-        console.error('Error al cargar líderes:', error);
     }
 }
 
@@ -1241,7 +1214,6 @@ async function cargarTablaLideres() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('責任者の読み込みエラー', 'error');
     }
 }
@@ -1277,7 +1249,6 @@ async function editarLider(id) {
         
         document.getElementById('modalLider').classList.add('active');
     } catch (error) {
-        console.error('Error:', error);
     }
 }
 
@@ -1319,7 +1290,6 @@ async function guardarLider() {
             cargarLideres();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('責任者保存エラー', 'error');
     }
 }
@@ -1337,7 +1307,6 @@ async function eliminarLider(id) {
             cargarTablaLideres();
         }
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('責任者削除エラー', 'error');
     }
 }
@@ -1413,7 +1382,6 @@ async function buscarAsistencias() {
         
         mostrarNotificacion(`✓ ${asistencias.length}件のデータが見つかりました`);
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('検索エラー', 'error');
     }
 }
@@ -1485,7 +1453,6 @@ async function generarReporte() {
     if (liderId) url += `&lider_id=${liderId}`;
     
     try {
-        console.log('Generando reporte con URL:', url);
         
         const response = await fetch(url);
         
@@ -1499,7 +1466,6 @@ async function generarReporte() {
         ultimasAsistenciasReporte = asistencias;
         rangoFechasReporte = { desde: fechaDesde, hasta: fechaHasta };
         
-        console.log('Asistencias recibidas:', asistencias.length);
         
         const totalAsistencias = asistencias.length;
         const presentes = asistencias.filter(a => a.presente).length;
@@ -1519,7 +1485,6 @@ async function generarReporte() {
             mostrarNotificacion(`✓ レポート作成完了：${totalAsistencias}件`);
         }
     } catch (error) {
-        console.error('Error completo:', error);
         mostrarNotificacion('レポートエラー：' + error.message, 'error');
     }
 }
@@ -1586,7 +1551,6 @@ async function exportarConsultasExcel() {
         XLSX.writeFile(wb, `出勤表_${fecha}.xlsx`);
         mostrarNotificacion('✓ Excel出力完了');
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('Excel出力エラー：' + error.message, 'error');
     }
 }
@@ -1615,7 +1579,6 @@ async function exportarReporteExcel() {
         XLSX.writeFile(wb, `出勤表_${fecha}.xlsx`);
         mostrarNotificacion('✓ Excel出力完了');
     } catch (error) {
-        console.error('Error:', error);
         mostrarNotificacion('Excel出力エラー：' + error.message, 'error');
     }
 }
