@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
@@ -6,7 +6,7 @@ import os
 import shutil
 import threading
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
@@ -192,6 +192,22 @@ def init_db():
 
 # =====================================================
 # RUTAS - CLIENTES
+# =====================================================
+
+# =====================================================
+# RUTAS FRONTEND
+# =====================================================
+
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:filename>')
+def static_files(filename):
+    return send_from_directory('.', filename)
+
+# =====================================================
+# CLIENTES
 # =====================================================
 
 @app.route('/api/clientes', methods=['GET'])
