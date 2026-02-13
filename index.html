@@ -67,7 +67,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="registroFecha">年月日</label>
-                                <input type="date" id="registroFecha" class="form-control" required>
+                                <input type="date" id="registroFecha" class="form-control" required min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="form-group">
                                 <label for="registroObra">現場名</label>
@@ -157,11 +157,11 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="consultaFechaDesde">年月日から</label>
-                                <input type="date" id="consultaFechaDesde" class="form-control">
+                                <input type="date" id="consultaFechaDesde" class="form-control" min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="form-group">
                                 <label for="consultaFechaHasta">年月日まで</label>
-                                <input type="date" id="consultaFechaHasta" class="form-control">
+                                <input type="date" id="consultaFechaHasta" class="form-control" min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="form-group">
                                 <label for="consultaCliente">取引先</label>
@@ -372,11 +372,11 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="reporteFechaDesde">年月日から *</label>
-                                <input type="date" id="reporteFechaDesde" class="form-control">
+                                <input type="date" id="reporteFechaDesde" class="form-control" min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="form-group">
                                 <label for="reporteFechaHasta">年月日まで *</label>
-                                <input type="date" id="reporteFechaHasta" class="form-control">
+                                <input type="date" id="reporteFechaHasta" class="form-control" min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="form-group">
                                 <label for="reporteCliente">取引先</label>
@@ -487,7 +487,7 @@
                 </div>
                 <div class="form-group">
                     <label>入社年月日</label>
-                    <input type="date" id="empleadoFechaIngreso" class="form-control">
+                    <input type="date" id="empleadoFechaIngreso" class="form-control" min="2000-01-01" max="2099-12-31">
                 </div>
                 <div class="form-group">
                     <label>状態</label>
@@ -542,11 +542,11 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>作業開始日</label>
-                        <input type="date" id="obraFechaInicio" class="form-control">
+                        <input type="date" id="obraFechaInicio" class="form-control" min="2000-01-01" max="2099-12-31">
                     </div>
                     <div class="form-group">
                         <label>作業終了日（予定）</label>
-                        <input type="date" id="obraFechaFin" class="form-control">
+                        <input type="date" id="obraFechaFin" class="form-control" min="2000-01-01" max="2099-12-31">
                     </div>
                 </div>
                 

@@ -19,6 +19,54 @@ function esc(str) {
 }
 
 // =====================================================
+// VALIDACIÓN DE FECHAS — año máx 4 dígitos, entre 2000-2099
+// =====================================================
+function limitarAnioFecha(input) {
+    const val = input.value;
+    if (!val) return;
+    const partes = val.split('-');
+    if (partes.length < 1) return;
+
+    let anio = partes[0];
+
+    // Si tiene más de 4 dígitos, cortar a los primeros 4
+    if (anio.length > 4) {
+        anio = anio.substring(0, 4);
+        partes[0] = anio;
+        input.value = partes.join('-');
+    }
+
+    // Si el año ya tiene 4 dígitos y no empieza con 20, corregir
+    if (anio.length === 4) {
+        const num = parseInt(anio);
+        if (num < 2000) {
+            partes[0] = '2000';
+            input.value = partes.join('-');
+            mostrarNotificacion('年は2000年以降を入力してください', 'error');
+        } else if (num > 2099) {
+            partes[0] = '2099';
+            input.value = partes.join('-');
+            mostrarNotificacion('年は2099年以前を入力してください', 'error');
+        }
+    }
+}
+
+function inicializarValidacionFechas() {
+    const ids = [
+        'registroFecha', 'consultaFechaDesde', 'consultaFechaHasta',
+        'reporteFechaDesde', 'reporteFechaHasta',
+        'empleadoFechaIngreso', 'obraFechaInicio', 'obraFechaFin'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', () => limitarAnioFecha(el));
+            el.addEventListener('blur',   () => limitarAnioFecha(el));
+        }
+    });
+}
+
+// =====================================================
 // INICIALIZACIÓN
 // =====================================================
 
@@ -28,6 +76,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Establecer fecha actual
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('registroFecha').value = today;
+    
+    // Activar validación de años en todos los inputs de fecha
+    inicializarValidacionFechas();
     
     // Cargar datos iniciales
     await cargarDatosIniciales();
