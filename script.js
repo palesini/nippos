@@ -1460,7 +1460,7 @@ async function generarReporte() {
 function formatearFecha(fecha) {
     if (!fecha) return '-';
     const [year, month, day] = fecha.split('-');
-    return `${day}/${month}/${year}`;
+    return `${year}/${month}/${day}`;
 }
 
 function formatearJornada(tipo) {
@@ -1587,21 +1587,28 @@ function agruparAsistenciasPorRango(asistencias, fechaDesde, fechaHasta) {
 }
 
 /**
- * Genera un array con todas las fechas entre dos fechas inclusive
+ * Genera un array con todas las fechas entre dos fechas inclusive.
+ * USA MÉTODOS LOCALES para evitar el problema de UTC vs zona horaria.
+ * Retorna strings 'YYYY-MM-DD'.
  */
 function generarRangoDias(desde, hasta) {
     const dias = [];
-    const cur = new Date(desde);
-    while (cur <= hasta) {
-        dias.push(cur.toISOString().split('T')[0]); // 'YYYY-MM-DD'
+    // Crear con año/mes/día locales para no depender de UTC
+    const cur = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate());
+    const fin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate());
+    while (cur <= fin) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, '0');
+        const d = String(cur.getDate()).padStart(2, '0');
+        dias.push(`${y}-${m}-${d}`);
         cur.setDate(cur.getDate() + 1);
     }
     return dias;
 }
 
 /**
- * Crea la hoja Excel en formato Komei Densetsu
- * Las columnas de días reflejan EXACTAMENTE el rango elegido en el formulario
+ * Crea la hoja Excel en formato Komei Densetsu.
+ * Las columnas de días reflejan EXACTAMENTE el rango elegido en el formulario.
  */
 function crearHojaKomeiDensetsu(obraData) {
     const diasSemana = ['日', '月', '火', '水', '木', '金', '土'];
@@ -1610,7 +1617,7 @@ function crearHojaKomeiDensetsu(obraData) {
     const rangoDias = generarRangoDias(obraData.fechaDesde, obraData.fechaHasta);
     const totalDias = rangoDias.length;
 
-    // Calcular año Reiwa para encabezado
+    // Fechas de inicio y fin para el encabezado
     const añoInicio  = obraData.fechaDesde.getFullYear();
     const mesInicio  = obraData.fechaDesde.getMonth() + 1;
     const diaInicio  = obraData.fechaDesde.getDate();
@@ -1618,43 +1625,39 @@ function crearHojaKomeiDensetsu(obraData) {
     const mesFin     = obraData.fechaHasta.getMonth() + 1;
     const diaFin     = obraData.fechaHasta.getDate();
     const añoReiwaIn = añoInicio - 2018;
-    const añoReiwaFn = añoFin - 2018;
+    const añoReiwaFn = añoFin    - 2018;
 
-    // Cuántas columnas necesitamos: A, B, días..., AH (total), AI (残業計)
-    // Columnas de días: índices 2 .. 2+totalDias-1
-    // Total col: 2+totalDias  → AH
-    // Resumen col: 2+totalDias+1 → AI
-    const colTotal  = 2 + totalDias;       // índice base-0 de la columna "定時小計"
-    const colResumen = 2 + totalDias + 1;  // índice base-0 de la columna "残業小計"
+    // Índices de columnas de totales (base-0)
+    const colTotal   = 2 + totalDias;      // columna "定時小計"
+    const colResumen = 2 + totalDias + 1;  // columna "残業小計"
 
-    // Helper: convierte índice de columna a letra(s) Excel
-    function colLetra(idx) {
-        return XLSX.utils.encode_col(idx);
-    }
+    function colLetra(idx) { return XLSX.utils.encode_col(idx); }
 
+    // Construir contenido como array-of-arrays y luego aplicar fórmulas
     const aoa = [];
 
     // ── FILA 1 ──────────────────────────────────────────────────
     const f1 = Array(colResumen + 1).fill('');
-    f1[0] = '会社名';
-    f1[1] = 'Komei Densetsu';
-    f1[16] = '出　　　勤　　　表';
-    f1[colTotal - 1] = '自';   // columna antes de totales → "自"
+    f1[0]            = '会社名';
+    f1[1]            = 'Komei Densetsu';
+    f1[16]           = '出　　　勤　　　表';
+    f1[colTotal - 1] = '自';
     f1[colTotal]     = `令和　${añoReiwaIn}年　${mesInicio}月 ${diaInicio}日`;
     aoa.push(f1);
 
     // ── FILA 2 ──────────────────────────────────────────────────
     const f2 = Array(colResumen + 1).fill('');
-    f2[0] = '現場名';
-    f2[1] = obraData.nombreObra;
+    f2[0]            = '現場名';
+    f2[1]            = obraData.nombreObra;
     f2[colTotal - 1] = '至';
     f2[colTotal]     = `令和　${añoReiwaFn}年　${mesFin}月 ${diaFin}日`;
     aoa.push(f2);
 
-    // ── FILA 3 ──────────────────────────────────────────────────
+    // ── FILA 3 – Etiqueta de mes ─────────────────────────────────
     const f3 = Array(colResumen + 1).fill('');
-    f3[0] = '１';
-    // Mostrar etiqueta de mes cuando cambia
+    f3[0]           = '１';
+    f3[colTotal]    = '定時小計';
+    f3[colResumen]  = '残業小計';
     let mesActual = null;
     rangoDias.forEach((fechaStr, i) => {
         const m = parseInt(fechaStr.split('-')[1]);
@@ -1663,8 +1666,6 @@ function crearHojaKomeiDensetsu(obraData) {
             mesActual = m;
         }
     });
-    f3[colTotal]    = '定時小計';
-    f3[colResumen]  = '残業小計';
     aoa.push(f3);
 
     // ── FILA 4 – Días numéricos ──────────────────────────────────
@@ -1672,21 +1673,23 @@ function crearHojaKomeiDensetsu(obraData) {
     f4[0] = 'No';
     f4[1] = '氏　名';
     rangoDias.forEach((fechaStr, i) => {
-        f4[2 + i] = parseInt(fechaStr.split('-')[2]); // día del mes
+        f4[2 + i] = parseInt(fechaStr.split('-')[2]);
     });
     aoa.push(f4);
 
     // ── FILA 5 – Días de la semana ───────────────────────────────
     const f5 = Array(colResumen + 1).fill('');
     rangoDias.forEach((fechaStr, i) => {
-        const dow = new Date(fechaStr + 'T00:00:00').getDay();
-        f5[2 + i] = diasSemana[dow];
+        // Parsear con métodos locales: new Date(año, mes-1, día)
+        const [y, m, d] = fechaStr.split('-').map(Number);
+        f5[2 + i] = diasSemana[new Date(y, m - 1, d).getDay()];
     });
     aoa.push(f5);
 
     // ── EMPLEADOS ────────────────────────────────────────────────
-    // Guardamos las referencias de celdas de fórmulas para aplicar después
-    const formulasPendientes = []; // { cellRef, formula }
+    const formulasPendientes = [];
+    const colIni = colLetra(2);
+    const colFin = colLetra(2 + totalDias - 1);
 
     Object.values(obraData.empleados).forEach((emp, idx) => {
         // Fila de asistencia
@@ -1696,11 +1699,8 @@ function crearHojaKomeiDensetsu(obraData) {
             fa[2 + i] = emp.asistencias[fechaStr] ? '出' : '';
         });
         aoa.push(fa);
-        const filaAsist = aoa.length; // número de fila en Excel (1-based)
+        const filaAsist = aoa.length; // 1-based
 
-        // Fórmula COUNTIF: cuenta "出" en el rango de días de esta fila
-        const colIni = colLetra(2);                 // primera columna de días
-        const colFin = colLetra(2 + totalDias - 1); // última columna de días
         formulasPendientes.push({
             cellRef: `${colLetra(colTotal)}${filaAsist}`,
             formula: `COUNTIF(${colIni}${filaAsist}:${colFin}${filaAsist},"出")`
@@ -1715,7 +1715,7 @@ function crearHojaKomeiDensetsu(obraData) {
             fhe[2 + i] = h > 0 ? h : '';
         });
         aoa.push(fhe);
-        const filaHE = aoa.length; // número de fila en Excel (1-based)
+        const filaHE = aoa.length; // 1-based
 
         formulasPendientes.push({
             cellRef: `${colLetra(colResumen)}${filaHE}`,
@@ -1723,16 +1723,15 @@ function crearHojaKomeiDensetsu(obraData) {
         });
     });
 
-    // Crear hoja a partir del array
+    // Crear hoja desde array-of-arrays
     const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-    // ── Aplicar fórmulas correctamente (tipo 'n' con campo 'f') ──
-    // aoa_to_sheet escribe strings; sobreescribimos con objeto de fórmula
+    // Aplicar fórmulas reales (aoa_to_sheet las escribe como texto)
     formulasPendientes.forEach(({ cellRef, formula }) => {
         ws[cellRef] = { t: 'n', f: formula };
     });
 
-    // ── Merged cells ─────────────────────────────────────────────
+    // Merged cells
     const colTotalLetra   = colLetra(colTotal);
     const colResumenLetra = colLetra(colResumen);
     ws['!merges'] = [
@@ -1744,13 +1743,13 @@ function crearHojaKomeiDensetsu(obraData) {
         XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`)
     ];
 
-    // ── Anchos de columna ────────────────────────────────────────
+    // Anchos de columna
     ws['!cols'] = [
-        { wch: 9.71 },   // A
-        { wch: 17.14 },  // B
-        ...Array(totalDias).fill({ wch: 3.57 }),  // columnas de días
-        { wch: 11 },     // 定時小計
-        { wch: 11 }      // 残業小計
+        { wch: 9.71 },
+        { wch: 17.14 },
+        ...Array(totalDias).fill({ wch: 3.57 }),
+        { wch: 11 },
+        { wch: 11 }
     ];
 
     return ws;
