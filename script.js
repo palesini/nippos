@@ -1737,15 +1737,14 @@ function crearHojaKomeiDensetsu(obraData) {
     });
 
     // ── GRAN TOTAL ───────────────────────────────────────────────
-    // Fila de total de asistencias
+    // Etiqueta pegada justo a la izquierda de la columna de totales
     const ftA = Array(colResumen + 1).fill('');
-    ftA[1] = '合　計';
+    ftA[colTotal - 1] = '合　計';
     aoa.push(ftA);
     const filaGranTotalAsist = aoa.length;
 
-    // Fila de total de horas extras
     const ftHE = Array(colResumen + 1).fill('');
-    ftHE[1] = '残業合計';
+    ftHE[colTotal - 1] = '残業合計';
     aoa.push(ftHE);
     const filaGranTotalHE = aoa.length;
 
@@ -1785,14 +1784,11 @@ function crearHojaKomeiDensetsu(obraData) {
     ws['!merges'] = [
         XLSX.utils.decode_range('B1:D1'),
         XLSX.utils.decode_range('B2:D2'),
-        XLSX.utils.decode_range(`${colTituloIni}1:${colTituloFin}1`),   // 出　　　勤　　　表
+        XLSX.utils.decode_range(`${colTituloIni}1:${colTituloFin}1`),
         XLSX.utils.decode_range(`${colTotalLetra}1:${colResumenLetra}1`),
         XLSX.utils.decode_range(`${colTotalLetra}2:${colResumenLetra}2`),
         XLSX.utils.decode_range(`${colTotalLetra}3:${colTotalLetra}5`),
-        XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`),
-        // Gran total — merge de la etiqueta en columna B
-        XLSX.utils.decode_range(`B${filaGranTotalAsist}:D${filaGranTotalAsist}`),
-        XLSX.utils.decode_range(`B${filaGranTotalHE}:D${filaGranTotalHE}`)
+        XLSX.utils.decode_range(`${colResumenLetra}3:${colResumenLetra}5`)
     ];
 
     // Anchos de columna
