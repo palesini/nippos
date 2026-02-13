@@ -252,6 +252,13 @@ async function guardarAsistencias() {
             })
         });
         
+        if (response.status === 409) {
+            // Conflicto: empleado ya presente en otra obra ese día
+            const data = await response.json();
+            mostrarNotificacion(data.message, 'error');
+            return;
+        }
+        
         if (response.ok) {
             mostrarNotificacion(`✓ ${registros.length}件の出勤データを保存しました`);
             registrosAsistencia = {};
