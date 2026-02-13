@@ -14,7 +14,7 @@ DATABASE = 'asistencias.db'
 BACKUP_DIR = 'backups'
 
 # PIN para descarga de base de datos (cámbialo por el que quieras)
-BACKUP_PIN = 'komei2024'
+BACKUP_PIN = '0407'
 
 # =====================================================
 # BACKUP AUTOMÁTICO DIARIO
