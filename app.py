@@ -10,10 +10,8 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
-# /data es el volumen persistente de Fly.io — sobrevive reinicios y redeploys
-DATA_DIR   = os.environ.get('DATA_DIR', '/data')
-DATABASE   = os.path.join(DATA_DIR, 'asistencias.db')
-BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
+DATABASE = 'asistencias.db'
+BACKUP_DIR = 'backups'
 
 # PIN para descarga de base de datos (cámbialo por el que quieras)
 BACKUP_PIN = 'komei2024'
@@ -39,11 +37,15 @@ def limpiar_backups_viejos():
         a_eliminar = archivos[BACKUP_KEEP_COUNT:]  # Todo lo que pase de los últimos 5
         for archivo in a_eliminar:
             os.remove(os.path.join(BACKUP_DIR, archivo))
+            print(f'[Backup] Respaldo eliminado: {archivo}')
 
-        # limpieza completada
+        if a_eliminar:
+            print(f'[Backup] Limpieza semanal: {len(a_eliminar)} respaldo(s) eliminado(s), quedan {min(len(archivos), BACKUP_KEEP_COUNT)}')
+        else:
+            print(f'[Backup] Limpieza semanal: nada que eliminar ({len(archivos)} respaldo(s))')
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f'[Backup] Error en limpieza: {e}')
     finally:
         # Programar la próxima limpieza en 7 días
         timer = threading.Timer(CLEANUP_INTERVAL, limpiar_backups_viejos)
@@ -64,9 +66,12 @@ def realizar_backup():
         # Solo hacer backup si no existe uno de hoy
         if not os.path.exists(destino):
             shutil.copy2(DATABASE, destino)
+            print(f'[Backup] Respaldo creado: {destino}')
+        else:
+            print(f'[Backup] Ya existe respaldo de hoy: {destino}')
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f'[Backup] Error al crear respaldo: {e}')
     finally:
         # Programar el próximo backup en 24 horas
         timer = threading.Timer(86400, realizar_backup)
@@ -875,13 +880,11 @@ def backup_descargar(key):
 # =====================================================
 
 if __name__ == '__main__':
-    # Asegurar que el directorio de datos existe (volumen Fly.io)
-    os.makedirs(DATA_DIR, exist_ok=True)
-
-
     # Crear la base de datos si no existe
     if not os.path.exists(DATABASE):
+        print('Creando base de datos...')
         init_db()
+        print('Base de datos creada exitosamente!')
     else:
         # Verificar que existan las tablas
         init_db()
@@ -889,6 +892,9 @@ if __name__ == '__main__':
     # Iniciar backup automático diario y limpieza semanal
     realizar_backup()
     limpiar_backups_viejos()
+    print(f'[Backup] Respaldo diario activado → carpeta /{BACKUP_DIR}/')
+    print(f'[Backup] Limpieza semanal activada → conserva los últimos {BACKUP_KEEP_COUNT} respaldos')
     
-    port = int(os.environ.get('PORT', 8080))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    print('Servidor iniciado en http://localhost:5000')
+    print('Presiona CTRL+C para detener')
+    app.run(debug=True, host='0.0.0.0', port=5000)
