@@ -10,11 +10,13 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Configuración de la base de datos
-DATABASE = 'asistencias.db'
-BACKUP_DIR = 'backups'
+# /data es el volumen persistente de Fly.io — sobrevive reinicios y redeploys
+DATA_DIR   = os.environ.get('DATA_DIR', '/data')
+DATABASE   = os.path.join(DATA_DIR, 'asistencias.db')
+BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
 
 # PIN para descarga de base de datos (cámbialo por el que quieras)
-BACKUP_PIN = '0407'
+BACKUP_PIN = 'komei2024'
 
 # =====================================================
 # BACKUP AUTOMÁTICO DIARIO
@@ -37,15 +39,11 @@ def limpiar_backups_viejos():
         a_eliminar = archivos[BACKUP_KEEP_COUNT:]  # Todo lo que pase de los últimos 5
         for archivo in a_eliminar:
             os.remove(os.path.join(BACKUP_DIR, archivo))
-            print(f'[Backup] Respaldo eliminado: {archivo}')
 
-        if a_eliminar:
-            print(f'[Backup] Limpieza semanal: {len(a_eliminar)} respaldo(s) eliminado(s), quedan {min(len(archivos), BACKUP_KEEP_COUNT)}')
-        else:
-            print(f'[Backup] Limpieza semanal: nada que eliminar ({len(archivos)} respaldo(s))')
+        # limpieza completada
 
-    except Exception as e:
-        print(f'[Backup] Error en limpieza: {e}')
+    except Exception:
+        pass
     finally:
         # Programar la próxima limpieza en 7 días
         timer = threading.Timer(CLEANUP_INTERVAL, limpiar_backups_viejos)
@@ -66,12 +64,9 @@ def realizar_backup():
         # Solo hacer backup si no existe uno de hoy
         if not os.path.exists(destino):
             shutil.copy2(DATABASE, destino)
-            print(f'[Backup] Respaldo creado: {destino}')
-        else:
-            print(f'[Backup] Ya existe respaldo de hoy: {destino}')
 
-    except Exception as e:
-        print(f'[Backup] Error al crear respaldo: {e}')
+    except Exception:
+        pass
     finally:
         # Programar el próximo backup en 24 horas
         timer = threading.Timer(86400, realizar_backup)
@@ -793,7 +788,7 @@ async function verificar() {
                     ${isLatest ? '<span class="tag-current">最新</span>' : ''}
                     <div class="file-date">${f.fecha} &nbsp;|&nbsp; ${f.tamaño}</div>
                 </div>
-                <a class="btn-download" href="/backup/descargar/${f.nombre}?pin=${encodeURIComponent(pinOk)}">
+                <a class="btn-download" href="/backup/descargar/${encodeURIComponent(f.key)}?pin=${encodeURIComponent(pinOk)}">
                     ⬇ DL
                 </a>
             </div>`;
@@ -830,19 +825,19 @@ def backup_lista():
             if nombre.startswith('asistencias_') and nombre.endswith('.db'):
                 ruta = os.path.join(BACKUP_DIR, nombre)
                 stat = os.stat(ruta)
-                tamaño_kb = stat.st_size / 1024
-                fecha_mod = datetime.fromtimestamp(stat.st_mtime).strftime('%Y/%m/%d %H:%M')
                 archivos.append({
                     'nombre': nombre,
-                    'fecha':  fecha_mod,
-                    'tamaño': f'{tamaño_kb:.1f} KB'
+                    'key':    nombre,          # clave para la URL de descarga
+                    'fecha':  datetime.fromtimestamp(stat.st_mtime).strftime('%Y/%m/%d %H:%M'),
+                    'tamaño': f'{stat.st_size/1024:.1f} KB'
                 })
 
-    # También incluir la DB activa
+    # DB activa — usa key especial 'current'
     if os.path.exists(DATABASE):
         stat = os.stat(DATABASE)
         archivos.insert(0, {
-            'nombre': 'asistencias.db (本番)',
+            'nombre': 'asistencias.db (本番・現在)',
+            'key':    'current',               # clave limpia para la URL
             'fecha':  datetime.fromtimestamp(stat.st_mtime).strftime('%Y/%m/%d %H:%M'),
             'tamaño': f'{stat.st_size/1024:.1f} KB'
         })
@@ -850,32 +845,29 @@ def backup_lista():
     return jsonify({'archivos': archivos})
 
 
-@app.route('/backup/descargar/<filename>')
-def backup_descargar(filename):
+@app.route('/backup/descargar/<key>')
+def backup_descargar(key):
     """Descarga un archivo de backup (requiere PIN)."""
     pin = request.args.get('pin', '')
     if pin != BACKUP_PIN:
         return jsonify({'error': 'PIN incorrecto'}), 403
 
-    # Solo permitir archivos .db para evitar path traversal
-    if not filename.endswith('.db') or '/' in filename or '\\' in filename or '..' in filename:
-        return jsonify({'error': 'Archivo no válido'}), 400
-
-    # Determinar si es la DB activa o un backup
-    if filename == 'asistencias.db (本番)':
+    # DB activa
+    if key == 'current':
         if not os.path.exists(DATABASE):
             return jsonify({'error': 'Archivo no encontrado'}), 404
-        return send_file(
-            os.path.abspath(DATABASE),
-            as_attachment=True,
-            download_name=f'asistencias_actual_{datetime.now().strftime("%Y%m%d_%H%M")}.db'
-        )
+        nombre_descarga = f'asistencias_actual_{datetime.now().strftime("%Y%m%d_%H%M")}.db'
+        return send_file(os.path.abspath(DATABASE), as_attachment=True, download_name=nombre_descarga)
 
-    ruta = os.path.join(BACKUP_DIR, filename)
+    # Backup diario — validar que sea un nombre seguro
+    if not key.endswith('.db') or '/' in key or '\\' in key or '..' in key or '(' in key:
+        return jsonify({'error': 'Archivo no válido'}), 400
+
+    ruta = os.path.join(BACKUP_DIR, key)
     if not os.path.exists(ruta):
         return jsonify({'error': 'Archivo no encontrado'}), 404
 
-    return send_file(os.path.abspath(ruta), as_attachment=True, download_name=filename)
+    return send_file(os.path.abspath(ruta), as_attachment=True, download_name=key)
 
 
 # =====================================================
@@ -883,11 +875,13 @@ def backup_descargar(filename):
 # =====================================================
 
 if __name__ == '__main__':
+    # Asegurar que el directorio de datos existe (volumen Fly.io)
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+
     # Crear la base de datos si no existe
     if not os.path.exists(DATABASE):
-        print('Creando base de datos...')
         init_db()
-        print('Base de datos creada exitosamente!')
     else:
         # Verificar que existan las tablas
         init_db()
@@ -895,9 +889,6 @@ if __name__ == '__main__':
     # Iniciar backup automático diario y limpieza semanal
     realizar_backup()
     limpiar_backups_viejos()
-    print(f'[Backup] Respaldo diario activado → carpeta /{BACKUP_DIR}/')
-    print(f'[Backup] Limpieza semanal activada → conserva los últimos {BACKUP_KEEP_COUNT} respaldos')
     
-    print('Servidor iniciado en http://localhost:5000')
-    print('Presiona CTRL+C para detener')
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=False, host='0.0.0.0', port=port)
