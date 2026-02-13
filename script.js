@@ -109,7 +109,7 @@ async function cargarEmpleadosRegistro() {
         container.innerHTML = '';
         
         if (empleados.length === 0) {
-            container.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No hay empleados activos. Agrega empleados desde la sección Empleados.</p>';
+            container.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">作業員が登録されていません。作業員メニューから追加してください。</p>';
             return;
         }
         
@@ -129,7 +129,7 @@ async function cargarEmpleadosRegistro() {
                         ${fotoHtml}
                         <div>
                             <div class="worker-name">${empleado.nombre} ${empleado.apellido}</div>
-                            <div class="worker-meta">${empleado.cargo || 'Sin cargo'}${empleado.telefono ? ' • ' + empleado.telefono : ''}</div>
+                            <div class="worker-meta">${empleado.cargo || '役職なし'}${empleado.telefono ? ' • ' + empleado.telefono : ''}</div>
                         </div>
                     </div>
                 </div>
@@ -321,7 +321,7 @@ async function cargarEmpleados() {
         
         const select = document.getElementById('consultaEmpleado');
         if (select) {
-            select.innerHTML = '<option value="">Todos los empleados</option>';
+            select.innerHTML = '<option value="">全作業員</option>';
             empleados.forEach(emp => {
                 select.innerHTML += `<option value="${emp.id}">${emp.nombre} ${emp.apellido}</option>`;
             });
@@ -342,7 +342,7 @@ async function cargarTablaEmpleados() {
         tbody.innerHTML = '';
         
         if (empleados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No hay empleados registrados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">作業員が登録されていません</td></tr>';
             return;
         }
         
@@ -606,7 +606,7 @@ async function cargarClientes() {
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (select) {
-                select.innerHTML = '<option value="">Todos los clientes</option>';
+                select.innerHTML = '<option value="">全取引先</option>';
                 clientes.forEach(cliente => {
                     select.innerHTML += `<option value="${cliente.id}">${cliente.nombre}</option>`;
                 });
@@ -630,7 +630,7 @@ async function cargarTablaClientes() {
         tbody.innerHTML = '';
         
         if (clientes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay clientes registrados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">取引先が登録されていません</td></tr>';
             return;
         }
         
@@ -772,7 +772,7 @@ async function cargarObras() {
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (select) {
-                select.innerHTML = '<option value="">Seleccione una obra...</option>';
+                select.innerHTML = '<option value="">現場を選択...</option>';
                 obras.filter(o => o.estado === 'activa').forEach(obra => {
                     select.innerHTML += `<option value="${obra.id}">${obra.nombre}</option>`;
                 });
@@ -794,7 +794,7 @@ async function cargarTablaObras() {
         tbody.innerHTML = '';
         
         if (obras.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay obras registradas</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">現場が登録されていません</td></tr>';
             return;
         }
         
@@ -851,7 +851,7 @@ async function cargarClientesYLideresParaObra() {
         const clientes = await responseClientes.json();
         
         const selectCliente = document.getElementById('obraCliente');
-        selectCliente.innerHTML = '<option value="">Seleccione un cliente...</option>';
+        selectCliente.innerHTML = '<option value="">取引先を選択...</option>';
         clientes.forEach(cliente => {
             selectCliente.innerHTML += `<option value="${cliente.id}">${cliente.nombre}</option>`;
         });
@@ -861,7 +861,7 @@ async function cargarClientesYLideresParaObra() {
         const lideres = await responseLideres.json();
         
         const selectLider = document.getElementById('obraLider');
-        selectLider.innerHTML = '<option value="">Seleccione un líder...</option>';
+        selectLider.innerHTML = '<option value="">責任者を選択...</option>';
         lideres.forEach(lider => {
             selectLider.innerHTML += `<option value="${lider.id}">${lider.nombre} ${lider.apellido}</option>`;
         });
@@ -1003,7 +1003,7 @@ async function cargarEmpleadosParaObra() {
                            ${checked}
                            onchange="toggleEmpleadoObra(${emp.id}, this.checked)"
                            style="margin-right: 10px;">
-                    <span>${emp.nombre} ${emp.apellido} - ${emp.cargo || 'Sin cargo'}</span>
+                    <span>${emp.nombre} ${emp.apellido} - ${emp.cargo || '役職なし'}</span>
                 </label>
             `;
             container.appendChild(div);
@@ -1063,7 +1063,7 @@ async function cargarEmpleadosDeObra(obraId) {
         container.innerHTML = '';
         
         if (empleados.length === 0) {
-            container.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No hay empleados asignados a esta obra. Edita la obra para asignar empleados.</p>';
+            container.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">この現場に作業員が割り当てられていません。現場を編集して追加してください。</p>';
             return;
         }
         
@@ -1083,7 +1083,7 @@ async function cargarEmpleadosDeObra(obraId) {
                         ${fotoHtml}
                         <div>
                             <div class="worker-name">${empleado.nombre} ${empleado.apellido}</div>
-                            <div class="worker-meta">${empleado.cargo || 'Sin cargo'}${empleado.telefono ? ' • ' + empleado.telefono : ''}</div>
+                            <div class="worker-meta">${empleado.cargo || '役職なし'}${empleado.telefono ? ' • ' + empleado.telefono : ''}</div>
                         </div>
                     </div>
                 </div>
@@ -1135,7 +1135,7 @@ async function cargarLideres() {
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (select) {
-                select.innerHTML = '<option value="">Todos los líderes</option>';
+                select.innerHTML = '<option value="">全責任者</option>';
                 lideres.forEach(lider => {
                     select.innerHTML += `<option value="${lider.id}">${lider.nombre} ${lider.apellido}</option>`;
                 });
@@ -1159,7 +1159,7 @@ async function cargarTablaLideres() {
         tbody.innerHTML = '';
         
         if (lideres.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay líderes registrados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">責任者が登録されていません</td></tr>';
             return;
         }
         
@@ -1368,7 +1368,7 @@ async function cargarFiltrosReportes() {
     
     // Llenar selector de clientes
     const selectCliente = document.getElementById('reporteCliente');
-    selectCliente.innerHTML = '<option value="">Todos los clientes</option>';
+    selectCliente.innerHTML = '<option value="">全取引先</option>';
     clientes.forEach(cliente => {
         const option = document.createElement('option');
         option.value = cliente.id;
@@ -1388,7 +1388,7 @@ async function cargarFiltrosReportes() {
     
     // Llenar selector de líderes
     const selectLider = document.getElementById('reporteLider');
-    selectLider.innerHTML = '<option value="">Todos los líderes</option>';
+    selectLider.innerHTML = '<option value="">全責任者</option>';
     lideres.forEach(lider => {
         const option = document.createElement('option');
         option.value = lider.id;
