@@ -605,6 +605,33 @@ body {
 }
 
 /* Responsive */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.95);
+}
+
 @media (max-width: 1024px) {
     .sidebar {
         width: 220px;
@@ -613,13 +640,25 @@ body {
     .main-content {
         margin-left: 220px;
     }
+    
+    .form-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
     .sidebar {
         position: fixed;
         transform: translateX(-100%);
-        transition: transform 0.3s;
+        transition: transform 0.3s ease;
+        width: 280px;
+        z-index: 1000;
     }
     
     .sidebar.open {
@@ -628,7 +667,17 @@ body {
     
     .main-content {
         margin-left: 0;
-        padding: 20px;
+        padding: 80px 15px 20px 15px;
+    }
+    
+    .view-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .view-header h2 {
+        font-size: 24px;
     }
     
     .form-grid {
@@ -638,21 +687,95 @@ body {
     .action-bar {
         flex-direction: column;
         gap: 15px;
+        position: relative;
     }
     
     .stats-summary {
         width: 100%;
         justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        flex-direction: column;
+        text-align: center;
     }
     
     .btn-lg {
         width: 100%;
     }
+    
+    .card-header {
+        padding: 15px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    /* Tablas responsive */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .data-table {
+        font-size: 13px;
+        min-width: 600px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px;
+        white-space: nowrap;
+    }
+    
+    /* Modales en móvil */
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    /* Report cards responsive */
+    .report-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .report-card {
+        padding: 15px;
+    }
+    
+    .report-card-value {
+        font-size: 28px;
+    }
 }
 
 @media (max-width: 480px) {
+    .main-content {
+        padding: 70px 10px 15px 10px;
+    }
+    
+    .view-header h2 {
+        font-size: 20px;
+    }
+    
     .worker-item {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .worker-controls {
+        justify-content: center;
     }
     
     .attendance-toggle {
@@ -661,6 +784,87 @@ body {
     
     .shift-buttons {
         grid-template-columns: 1fr;
+    }
+    
+    .attendance-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+    
+    .btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .btn-lg {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+    
+    /* Stats más compactos */
+    .stats-summary {
+        gap: 15px;
+    }
+    
+    .stat-value {
+        font-size: 20px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    /* Report grid en una columna en móviles muy pequeños */
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-card-value {
+        font-size: 32px;
+    }
+    
+    /* Formularios más compactos */
+    .form-control {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+    }
+}
+
+/* Mejoras adicionales para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .report-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Overlay para cerrar menú en móvil */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .sidebar-overlay.active {
+        display: block;
     }
 }
 
