@@ -1939,7 +1939,7 @@ async function generarReporteMensual() {
     try {
         // Obtener todos los datos necesarios
         const [asistencias, empleados, obras] = await Promise.all([
-            fetch(`${API_URL}/asistencias/consultar?fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`).then(r => r.json()),
+            fetch(`${API_URL}/asistencias?fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`).then(r => r.json()),
             fetch(`${API_URL}/empleados`).then(r => r.json()),
             fetch(`${API_URL}/obras`).then(r => r.json())
         ]);
