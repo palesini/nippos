@@ -1954,7 +1954,7 @@ async function generarReporteMensual() {
         asistencias.forEach(asist => {
             if (!asist.presente) return; // Solo días trabajados
             
-            const fecha = new Date(asist.fecha);
+            const [y, m, d] = asist.fecha.split('-').map(Number); const fecha = new Date(y, m - 1, d);
             const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
             
             if (!porMes[mesKey]) porMes[mesKey] = [];
@@ -1981,7 +1981,7 @@ async function generarReporteMensual() {
         mostrarNotificacion(`✓ ${Object.keys(porMes).length}ヶ月分のレポートを作成しました`);
         
     } catch (error) {
-        mostrarNotificacion('レポート作成エラー', 'error');
+        mostrarNotificacion('レポート作成エラー: ' + error.message, 'error');
     }
 }
 
@@ -1999,7 +1999,7 @@ function crearHojaMensual(año, mes, asistencias, empleados, obras) {
             };
         }
         
-        const fecha = new Date(asist.fecha);
+        const [y2, m2, d2] = asist.fecha.split('-').map(Number); const fecha = new Date(y2, m2 - 1, d2);
         const dia = fecha.getDate();
         porEmpleado[asist.empleado_id].dias[dia] = {
             obra: asist.obra_nombre || '-',
