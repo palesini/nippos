@@ -92,8 +92,8 @@ async function cargarDatosIniciales() {
             cargarClientes(),
             cargarObras(),
             cargarLideres(),
-            cargarEmpleados(),
-            cargarEmpleadosRegistro()
+            cargarEmpleados()
+            // NO cargar empleados de registro hasta que se seleccione una obra
         ]);
     } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
@@ -166,6 +166,14 @@ function selectShift(shift) {
 
 async function cargarEmpleadosRegistro() {
     try {
+        // NO mostrar empleados si no hay obra seleccionada
+        const obraId = document.getElementById('registroObra')?.value;
+        if (!obraId) {
+            const container = document.getElementById('listaEmpleadosRegistro');
+            if (container) container.innerHTML = '';
+            return;
+        }
+        
         const response = await fetch(`${API_URL}/empleados?estado=activo`);
         const empleados = await response.json();
         
@@ -231,9 +239,6 @@ async function cargarEmpleadosRegistro() {
     }
 }
 
-// Debounce global para renders
-window.renderDebounce = null;
-
 function marcarAsistencia(empleadoId, presente) {
     if (!registrosAsistencia[empleadoId]) {
         registrosAsistencia[empleadoId] = {};
@@ -245,24 +250,13 @@ function marcarAsistencia(empleadoId, presente) {
         registrosAsistencia[empleadoId].presente = presente;
     }
     
-    // Actualizar stats instantáneamente
-    const presentes = Object.values(registrosAsistencia).filter(r => r.presente === true).length;
-    const ausentes = Object.values(registrosAsistencia).filter(r => r.presente === false).length;
-    const statP = document.getElementById('statPresentes');
-    const statA = document.getElementById('statAusentes');
-    if (statP) statP.textContent = presentes;
-    if (statA) statA.textContent = ausentes;
-    
-    // Re-render con debounce (mejora performance en 4G)
-    clearTimeout(window.renderDebounce);
-    window.renderDebounce = setTimeout(() => {
-        const obraId = document.getElementById('registroObra').value;
-        if (obraId) {
-            cargarEmpleadosDeObra(obraId);
-        } else {
-            cargarEmpleadosRegistro();
-        }
-    }, 200);
+    // Recargar empleados respetando la obra seleccionada
+    const obraId = document.getElementById('registroObra').value;
+    if (obraId) {
+        cargarEmpleadosDeObra(obraId);
+    } else {
+        cargarEmpleadosRegistro();
+    }
 }
 
 function actualizarHorasExtras(empleadoId, horas) {
@@ -340,7 +334,15 @@ async function guardarAsistencias() {
         if (response.ok) {
             mostrarNotificacion(`✓ ${registros.length}件の出勤データを保存しました`);
             registrosAsistencia = {};
-            cargarEmpleadosRegistro();
+            // Limpiar vista: resetear obra y ocultar empleados
+            document.getElementById('registroObra').value = '';
+            const listaEmpleados = document.getElementById('listaEmpleadosRegistro');
+            if (listaEmpleados) listaEmpleados.innerHTML = '';
+            // Limpiar stats
+            const statP = document.getElementById('statPresentes');
+            const statA = document.getElementById('statAusentes');
+            if (statP) statP.textContent = '0';
+            if (statA) statA.textContent = '0';
         } else {
             throw new Error('保存エラー');
         }
@@ -1917,3 +1919,165 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+/**
+ * =====================================================
+ * REPORTE MENSUAL - 月別出勤簿
+ * Genera Excel con 1 hoja por mes mostrando:
+ * - Por cada empleado: nombre, cliente/obra por día, horas extras por día
+ * =====================================================
+ */
+
+async function generarReporteMensual() {
+    const fechaDesde = document.getElementById('reporteFechaDesde').value;
+    const fechaHasta = document.getElementById('reporteFechaHasta').value;
+    
+    if (!fechaDesde || !fechaHasta) {
+        mostrarNotificacion('期間を選択してください', 'error');
+        return;
+    }
+    
+    try {
+        // Obtener todos los datos necesarios
+        const [asistencias, empleados, obras] = await Promise.all([
+            fetch(`${API_URL}/asistencias/consultar?fecha_desde=${fechaDesde}&fecha_hasta=${fechaHasta}`).then(r => r.json()),
+            fetch(`${API_URL}/empleados`).then(r => r.json()),
+            fetch(`${API_URL}/obras`).then(r => r.json())
+        ]);
+        
+        if (asistencias.length === 0) {
+            mostrarNotificacion('この期間にデータがありません', 'error');
+            return;
+        }
+        
+        // Agrupar asistencias por mes
+        const porMes = {};
+        asistencias.forEach(asist => {
+            if (!asist.presente) return; // Solo días trabajados
+            
+            const fecha = new Date(asist.fecha);
+            const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!porMes[mesKey]) porMes[mesKey] = [];
+            porMes[mesKey].push(asist);
+        });
+        
+        // Crear workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Crear una hoja por cada mes
+        Object.keys(porMes).sort().forEach(mesKey => {
+            const [año, mes] = mesKey.split('-').map(Number);
+            const ws = crearHojaMensual(año, mes, porMes[mesKey], empleados, obras);
+            
+            // Nombre de hoja en japonés
+            const mesNombre = `${mes}月`;
+            XLSX.utils.book_append_sheet(wb, ws, mesNombre);
+        });
+        
+        // Descargar
+        const nombreArchivo = `月別出勤簿_${fechaDesde}_${fechaHasta}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+        
+        mostrarNotificacion(`✓ ${Object.keys(porMes).length}ヶ月分のレポートを作成しました`);
+        
+    } catch (error) {
+        mostrarNotificacion('レポート作成エラー', 'error');
+    }
+}
+
+function crearHojaMensual(año, mes, asistencias, empleados, obras) {
+    const diasSemana = ['日', '月', '火', '水', '木', '金', '土'];
+    const diasEnMes = new Date(año, mes, 0).getDate(); // último día del mes
+    
+    // Agrupar por empleado
+    const porEmpleado = {};
+    asistencias.forEach(asist => {
+        if (!porEmpleado[asist.empleado_id]) {
+            porEmpleado[asist.empleado_id] = {
+                nombre: `${asist.empleado_nombre} ${asist.empleado_apellido}`,
+                dias: {}
+            };
+        }
+        
+        const fecha = new Date(asist.fecha);
+        const dia = fecha.getDate();
+        porEmpleado[asist.empleado_id].dias[dia] = {
+            obra: asist.obra_nombre || '-',
+            horas_extras: asist.horas_extras || 0
+        };
+    });
+    
+    // Construir array-of-arrays
+    const aoa = [];
+    
+    // Fila 1: Encabezado principal
+    const f1 = Array(diasEnMes + 2).fill('');
+    f1[0] = `第${año - 2006}期`; // Ajustar según tu periodo
+    f1[1] = '外注請求書用';
+    f1[5] = '全社員・外注員日報表';
+    aoa.push(f1);
+    
+    // Fila 2: No | 氏名 | 1 | 2 | 3...
+    const f2 = ['No', '氏　名'];
+    for (let d = 1; d <= diasEnMes; d++) {
+        f2.push(d);
+    }
+    aoa.push(f2);
+    
+    // Fila 3: Días de la semana
+    const f3 = ['', ''];
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fecha = new Date(año, mes - 1, d);
+        f3.push(diasSemana[fecha.getDay()]);
+    }
+    aoa.push(f3);
+    
+    // Por cada empleado (3 filas)
+    const empleadosOrdenados = Object.entries(porEmpleado).sort((a, b) => 
+        a[1].nombre.localeCompare(b[1].nombre, 'ja')
+    );
+    
+    empleadosOrdenados.forEach(([empId, emp], idx) => {
+        // Fila nombre
+        const fNombre = Array(diasEnMes + 2).fill('');
+        fNombre[1] = emp.nombre;
+        aoa.push(fNombre);
+        
+        // Fila obras/clientes
+        const fObra = Array(diasEnMes + 2).fill('');
+        fObra[0] = idx + 1; // Número de empleado
+        fObra[1] = '夜勤';   // Label (puedes cambiarlo por el tipo de jornada si quieres)
+        for (let d = 1; d <= diasEnMes; d++) {
+            fObra[d + 1] = emp.dias[d]?.obra || '';
+        }
+        aoa.push(fObra);
+        
+        // Fila horas extras
+        const fHoras = Array(diasEnMes + 2).fill('');
+        fHoras[1] = '残業時間';
+        for (let d = 1; d <= diasEnMes; d++) {
+            const h = emp.dias[d]?.horas_extras;
+            fHoras[d + 1] = h > 0 ? h : '';
+        }
+        aoa.push(fHoras);
+    });
+    
+    // Crear hoja
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    
+    // Anchos de columna
+    ws['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 18 },  // 氏名
+        ...Array(diasEnMes).fill({ wch: 12 }) // Días
+    ];
+    
+    // Merge cells para encabezado
+    ws['!merges'] = [
+        XLSX.utils.decode_range('B1:D1'),  // 外注請求書用
+        XLSX.utils.decode_range('F1:H1')   // 全社員・外注員日報表
+    ];
+    
+    return ws;
+}
+

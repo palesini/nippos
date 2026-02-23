@@ -14,7 +14,6 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img src="logo-komei.jpg" alt="Komei Densetsu" style="width: 160px; margin-bottom: 10px; border-radius: 8px; background: white; padding: 8px;">
                 <h1>Komei Nippo</h1>
                 <p>日報</p>
             </div>
@@ -67,7 +66,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="registroFecha">年月日</label>
-                                <input type="date" id="registroFecha" class="form-control" required min="2000-01-01" max="2099-12-31">
+                                <input type="date" id="registroFecha" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="registroObra">現場名</label>
@@ -157,11 +156,11 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="consultaFechaDesde">年月日から</label>
-                                <input type="date" id="consultaFechaDesde" class="form-control" min="2000-01-01" max="2099-12-31">
+                                <input type="date" id="consultaFechaDesde" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="consultaFechaHasta">年月日まで</label>
-                                <input type="date" id="consultaFechaHasta" class="form-control" min="2000-01-01" max="2099-12-31">
+                                <input type="date" id="consultaFechaHasta" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="consultaCliente">取引先</label>
@@ -188,14 +187,9 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" onclick="buscarAsistencias()">
-                                🔍 検索
-                            </button>
-                            <button class="btn btn-success" onclick="exportarConsultasExcel()">
-                                📊 Excel出力
-                            </button>
-                        </div>
+                        <button class="btn btn-primary" onclick="buscarAsistencias()">
+                            🔍 検索
+                        </button>
                     </div>
                 </div>
 
@@ -372,11 +366,11 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="reporteFechaDesde">年月日から *</label>
-                                <input type="date" id="reporteFechaDesde" class="form-control" min="2000-01-01" max="2099-12-31">
+                                <input type="date" id="reporteFechaDesde" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="reporteFechaHasta">年月日まで *</label>
-                                <input type="date" id="reporteFechaHasta" class="form-control" min="2000-01-01" max="2099-12-31">
+                                <input type="date" id="reporteFechaHasta" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label for="reporteCliente">取引先</label>
@@ -397,14 +391,12 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary btn-lg" onclick="generarReporte()">
-                                📊 レポート作成
-                            </button>
-                            <button class="btn btn-success btn-lg" onclick="exportarReporteExcel()">
-                                📊 Excel出力
-                            </button>
-                        </div>
+                        <button class="btn btn-primary btn-lg" onclick="generarReporte()">
+                            📊 レポート作成
+                        </button>
+                        <button class="btn btn-success btn-lg" onclick="generarReporteMensual()">
+                            📅 月別出勤簿
+                        </button>
                     </div>
                 </div>
 
@@ -439,67 +431,67 @@
     <div id="modalEmpleado" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalEmpleadoTitulo">作業員追加</h3>
+                <h3 id="modalEmpleadoTitulo">Agregar Empleado</h3>
                 <button class="modal-close" onclick="cerrarModalEmpleado()">×</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="empleadoId">
                 
                 <div class="form-group">
-                    <label>写真</label>
+                    <label>Foto del Empleado</label>
                     <div class="photo-upload-container">
                         <div class="photo-preview" id="photoPreview">
-                            <img id="photoPreviewImg" src="" alt="プレビュー" style="display: none;">
+                            <img id="photoPreviewImg" src="" alt="Vista previa" style="display: none;">
                             <div id="photoPlaceholder" class="photo-placeholder">
                                 <span>📷</span>
-                                <p>写真を選択</p>
+                                <p>Seleccionar foto</p>
                             </div>
                         </div>
                         <input type="file" id="empleadoFoto" accept="image/*" onchange="previsualizarFoto(this)">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('empleadoFoto').click()">
-                            📁 写真を選択
+                            📁 Seleccionar Foto
                         </button>
                         <button type="button" class="btn btn-danger btn-sm" onclick="eliminarFoto()" id="btnEliminarFoto" style="display: none;">
-                            🗑️ 削除
+                            🗑️ Eliminar
                         </button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>名前 *</label>
+                    <label>Nombre *</label>
                     <input type="text" id="empleadoNombre" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>苗字 *</label>
+                    <label>Apellido *</label>
                     <input type="text" id="empleadoApellido" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>My№</label>
+                    <label>DNI</label>
                     <input type="text" id="empleadoDNI" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label>役職</label>
-                    <input type="text" id="empleadoCargo" class="form-control" placeholder="例：作業員、職長、電気工">
+                    <label>Cargo</label>
+                    <input type="text" id="empleadoCargo" class="form-control" placeholder="Ej: Obrero, Maestro, Electricista">
                 </div>
                 <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="empleadoTelefono" class="form-control" placeholder="例：090-1234-5678">
+                    <label>Teléfono</label>
+                    <input type="tel" id="empleadoTelefono" class="form-control" placeholder="Ej: +54 9 11 1234-5678">
                 </div>
                 <div class="form-group">
-                    <label>入社年月日</label>
-                    <input type="date" id="empleadoFechaIngreso" class="form-control" min="2000-01-01" max="2099-12-31">
+                    <label>Fecha de Ingreso</label>
+                    <input type="date" id="empleadoFechaIngreso" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label>状態</label>
+                    <label>Estado</label>
                     <select id="empleadoEstado" class="form-control">
-                        <option value="activo">在職中</option>
-                        <option value="inactivo">退職</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModalEmpleado()">キャンセル</button>
-                <button class="btn btn-primary" onclick="guardarEmpleado()">保存</button>
+                <button class="btn btn-secondary" onclick="cerrarModalEmpleado()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarEmpleado()">Guardar</button>
             </div>
         </div>
     </div>
@@ -508,50 +500,50 @@
     <div id="modalObra" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
-                <h3 id="modalObraTitulo">現場追加</h3>
+                <h3 id="modalObraTitulo">Agregar Obra</h3>
                 <button class="modal-close" onclick="cerrarModalObra()">×</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="obraId">
                 
                 <div class="form-group">
-                    <label>現場名 *</label>
+                    <label>Nombre de la Obra *</label>
                     <input type="text" id="obraNombre" class="form-control" required>
                 </div>
                 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>取引先 *</label>
+                        <label>Cliente *</label>
                         <select id="obraCliente" class="form-control" required>
-                            <option value="">取引先を選択...</option>
+                            <option value="">Seleccione un cliente...</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>責任者 *</label>
+                        <label>Encargado/Líder *</label>
                         <select id="obraLider" class="form-control" required>
-                            <option value="">責任者を選択...</option>
+                            <option value="">Seleccione un líder...</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>住所</label>
+                    <label>Dirección</label>
                     <input type="text" id="obraDireccion" class="form-control">
                 </div>
                 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>作業開始日</label>
-                        <input type="date" id="obraFechaInicio" class="form-control" min="2000-01-01" max="2099-12-31">
+                        <label>Fecha de Inicio</label>
+                        <input type="date" id="obraFechaInicio" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>作業終了日（予定）</label>
-                        <input type="date" id="obraFechaFin" class="form-control" min="2000-01-01" max="2099-12-31">
+                        <label>Fecha de Fin (estimada)</label>
+                        <input type="date" id="obraFechaFin" class="form-control">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>状態</label>
+                    <label>Estado</label>
                     <select id="obraEstado" class="form-control">
                         <option value="activa">施工中</option>
                         <option value="pausada">一時中止</option>
@@ -560,20 +552,20 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>担当作業員</label>
+                    <label>Empleados Asignados</label>
                     <div style="max-height: 200px; overflow-y: auto; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
                         <div id="listaEmpleadosObra">
                             <!-- Se llenará dinámicamente -->
                         </div>
                     </div>
                     <small style="color: #666; margin-top: 5px; display: block;">
-                        この現場で作業する作業員を選択してください
+                        Selecciona los empleados que trabajarán en esta obra
                     </small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModalObra()">キャンセル</button>
-                <button class="btn btn-primary" onclick="guardarObra()">保存</button>
+                <button class="btn btn-secondary" onclick="cerrarModalObra()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarObra()">Guardar</button>
             </div>
         </div>
     </div>
@@ -582,31 +574,31 @@
     <div id="modalLider" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalLiderTitulo">責任者追加</h3>
+                <h3 id="modalLiderTitulo">Agregar Líder/Encargado</h3>
                 <button class="modal-close" onclick="cerrarModalLider()">×</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="liderId">
                 <div class="form-group">
-                    <label>名前 *</label>
+                    <label>Nombre *</label>
                     <input type="text" id="liderNombre" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>苗字 *</label>
+                    <label>Apellido *</label>
                     <input type="text" id="liderApellido" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="liderTelefono" class="form-control" placeholder="例：090-1234-5678">
+                    <label>Teléfono</label>
+                    <input type="tel" id="liderTelefono" class="form-control" placeholder="Ej: +54 9 11 1234-5678">
                 </div>
                 <div class="form-group">
-                    <label>メールアドレス</label>
+                    <label>Email</label>
                     <input type="email" id="liderEmail" class="form-control">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModalLider()">キャンセル</button>
-                <button class="btn btn-primary" onclick="guardarLider()">保存</button>
+                <button class="btn btn-secondary" onclick="cerrarModalLider()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarLider()">Guardar</button>
             </div>
         </div>
     </div>
@@ -615,39 +607,39 @@
     <div id="modalCliente" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalClienteTitulo">取引先追加</h3>
+                <h3 id="modalClienteTitulo">Agregar Cliente</h3>
                 <button class="modal-close" onclick="cerrarModalCliente()">×</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="clienteId">
                 <div class="form-group">
-                    <label>会社名 *</label>
-                    <input type="text" id="clienteNombre" class="form-control" required placeholder="会社名">
+                    <label>Nombre *</label>
+                    <input type="text" id="clienteNombre" class="form-control" required placeholder="Nombre del cliente">
                 </div>
                 <div class="form-group">
-                    <label>法人名</label>
-                    <input type="text" id="clienteRazonSocial" class="form-control" placeholder="法人名（完全）">
+                    <label>Razón Social</label>
+                    <input type="text" id="clienteRazonSocial" class="form-control" placeholder="Razón social completa">
                 </div>
                 <div class="form-group">
-                    <label>法人番号 / 個人番号</label>
-                    <input type="text" id="clienteRucDni" class="form-control" placeholder="番号">
+                    <label>RUC / DNI</label>
+                    <input type="text" id="clienteRucDni" class="form-control" placeholder="Número de identificación">
                 </div>
                 <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="clienteTelefono" class="form-control" placeholder="例：090-1234-5678">
+                    <label>Teléfono</label>
+                    <input type="tel" id="clienteTelefono" class="form-control" placeholder="Ej: +54 9 11 1234-5678">
                 </div>
                 <div class="form-group">
-                    <label>メールアドレス</label>
-                    <input type="email" id="clienteEmail" class="form-control" placeholder="mail@example.com">
+                    <label>Email</label>
+                    <input type="email" id="clienteEmail" class="form-control" placeholder="correo@ejemplo.com">
                 </div>
                 <div class="form-group">
-                    <label>住所</label>
-                    <input type="text" id="clienteDireccion" class="form-control" placeholder="住所">
+                    <label>Dirección</label>
+                    <input type="text" id="clienteDireccion" class="form-control" placeholder="Dirección completa">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModalCliente()">キャンセル</button>
-                <button class="btn btn-primary" onclick="guardarCliente()">保存</button>
+                <button class="btn btn-secondary" onclick="cerrarModalCliente()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
             </div>
         </div>
     </div>
@@ -655,8 +647,6 @@
     <!-- Notificación -->
     <div id="notification" class="notification"></div>
 
-    <!-- Librería SheetJS para exportar a Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
